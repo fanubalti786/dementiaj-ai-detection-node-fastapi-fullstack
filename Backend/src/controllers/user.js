@@ -1,45 +1,38 @@
 import { asyncHandler } from "../utils/AsyncHandler.js";
-import ErrorHandler  from "../utils/ApiError.js";
-import {User} from "../models/user.js";
-import ApiResponse  from "../utils/ApiResponse.js";
+import ErrorHandler from "../utils/ApiError.js";
+import { User } from "../models/user.js";
+import ApiResponse from "../utils/ApiResponse.js";
 import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/Cloudinary.js";
 import { sendEmail } from "../utils/send.Email.js";
 import crypto from "crypto";
 
-
- const registerUser = asyncHandler(async (req, res) => {
-  const existedUser = await User.findOne({email: req.body.email});
-  if(existedUser){
-    throw new ErrorHandler("User already exists", 400)
+const registerUser = asyncHandler(async (req, res) => {
+  const existedUser = await User.findOne({ email: req.body.email });
+  if (existedUser) {
+    throw new ErrorHandler("User already exists", 400);
   }
-let avatar = null; 
-if(req?.files?.avatar){
-  const avatarPath = req.files.avatar.tempFilePath;
-  if (!avatarPath) {
-    throw new ErrorHandler("avatar and resume path is required", 400);
+  let avatar = null;
+  if (req?.files?.avatar) {
+    const avatarPath = req.files.avatar.tempFilePath;
+    if (!avatarPath) {
+      throw new ErrorHandler("avatar and resume path is required", 400);
+    }
+    avatar = await uploadOnCloudinary(avatarPath, "AVATARS");
   }
-  avatar = await uploadOnCloudinary(avatarPath, "AVATARS");
-}
-  const {
-    fullName,
-    email,
-    password, 
-    type
-  } = req.body;
-  if(!fullName || !email || !password || !type){
-    throw new ErrorHandler("All fields are required",400)
+  const { fullName, email, password, type } = req.body;
+  if (!fullName || !email || !password || !type) {
+    throw new ErrorHandler("All fields are required", 400);
   }
- await User.create({
+  await User.create({
     fullName,
     email,
     password,
     type,
     avatar: avatar ? avatar.secure_url : null,
- 
-  }); 
+  });
   return res
     .status(201)
-    .json({success:true,message:"Successfully registered user"});
+    .json({ success: true, message: "Successfully registered user" });
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -62,13 +55,15 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   const token = userExist.generatejsonwebtoken();
-
   const user = await User.findById(userExist._id).select("-password");
-  res
-    .status(200)
-    .json(
-      new ApiResponse(201, { ...user, token }, "User logged in successfully")
-    );
+  res.status(200).json({
+    success: true,
+    message: "Successfully logged in",
+    data: {
+      user: user,
+      token: token,
+    },
+  });
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
@@ -108,7 +103,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     const user = await User.findById(req.userId);
     const avatarId = user.avatar.public_id;
     const avatarPath = req.files.avatar.tempFilePath;
-    console.log(avatarPath)
+    console.log(avatarPath);
     if (!avatarPath) {
       throw new ErrorHandler("server error", 500);
     }
@@ -162,7 +157,7 @@ const updatePassword = asyncHandler(async (req, res) => {
   if (newPassword !== confirmPassword) {
     throw new ErrorHandler(
       "new password and confirm password do not match",
-      400
+      400,
     );
   }
 
@@ -208,7 +203,6 @@ const forgetPassword = asyncHandler(async (req, res) => {
   const resetToken = user.getResetPasswordToken();
 
   await user.save({ validateBeforeSave: false });
-  
 
   //http://google.com
   const resetPasswordUrl = `${process.env.DASHBOARD_URL}/password/reset/${resetToken}`;
@@ -233,7 +227,6 @@ const forgetPassword = asyncHandler(async (req, res) => {
   }
 });
 
-
 const resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.params;
   const { password, confirmPassword } = req.body;
@@ -245,20 +238,16 @@ const resetPassword = asyncHandler(async (req, res) => {
   if (password !== confirmPassword) {
     throw new ErrorHandler(
       "new password and confirm password do not match",
-      400
+      400,
     );
   }
 
-  
   const resetpasswordToken = crypto
     .createHash("sha256")
     .update(token)
     .digest("hex");
 
-
-
-    console.log(resetpasswordToken);
-
+  console.log(resetpasswordToken);
 
   const user = await User.findOne({
     resetpasswordToken,
@@ -275,8 +264,9 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   await user.save();
 
-  res.status(200)
-  .json(new ApiResponse(200, user, "Password updated successfully"));
+  res
+    .status(200)
+    .json(new ApiResponse(200, user, "Password updated successfully"));
 });
 
 export {
@@ -288,5 +278,5 @@ export {
   updatePassword,
   getUserForPortfolio,
   forgetPassword,
-  resetPassword
+  resetPassword,
 };

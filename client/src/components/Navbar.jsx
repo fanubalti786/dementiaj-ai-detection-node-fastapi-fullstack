@@ -10,7 +10,7 @@ export default function Navbar() {
   const navItems = [
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
-    { name: "Contact", path: "/contact" }
+    { name: "Contact", path: "/contact" },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -129,3 +129,4 @@ export default function Navbar() {
     </nav>
   );
 }
+
