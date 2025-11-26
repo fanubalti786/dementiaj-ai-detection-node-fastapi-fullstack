@@ -1,6 +1,6 @@
 import React from "react";
 import "quill/dist/quill.snow.css";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import Blog from "./pages/Blog";
 import Layout from "./pages/admin/Layout";
@@ -13,6 +13,15 @@ import Login from "./components/admin/Login";
 import About from "./pages/About";
 import ContactUs from "./pages/ContactUs";
 import Signup from "./components/admin/Signup";
+
+// protected routes get token from local storage
+const ProtectedRoutes = ({ children }) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    return <Navigate to="/login" />;
+  }
+  return children;
+};
 
 export default function App() {
   // const isLoggedIn = true;
@@ -28,15 +37,20 @@ export default function App() {
     <div>
       <Routes>
         {/* Admin Routes */}
-        <Route path="/admin" element={<Layout />}>
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoutes>
+              <Layout />
+            </ProtectedRoutes>
+          }
+        >
           {/* {isLoggedIn && ( */}
           <>
             <Route index element={<Dashboard />} />
             <Route path="addBlog" element={<AddBlog />} />
             <Route path="listBlog" element={<ListBlog />} />
             <Route path="comments" element={<Comments />} />
-            {/* Agar /admin ke andar koi unknown path ho */}
-            {/* <Route path="*" element={<AdminNotFound />} /> */}
           </>
           {/* )} */}
         </Route>

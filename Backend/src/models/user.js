@@ -43,8 +43,10 @@ userSchema.methods.comparePassword = async function (password) {
 };
 
 userSchema.methods.generatejsonwebtoken = function () {
-  return jwt.sign({ id: this._id }, "asldkfj20398402394as;dfk");
+  return jwt.sign(
+    { id: this._id },
+    "asldkfj20398402394as;dfka;sldkfja;lskdjf;lasjd;lfkjs;l",
+  );
 };
 
 export const User = mongoose.model("User", userSchema);
-

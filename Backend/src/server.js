@@ -14,6 +14,7 @@ import { projectRouter } from "./router/project.js";
 import { skillRouter } from "./router/skill.js";
 
 import "./database/db.js";
+import { blogsRouter } from "./router/blogsRouter.js";
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use("/api/v1/timeLine", timeLineRouter);
 app.use("/api/v1/application", applicationRouter);
 app.use("/api/v1/project", projectRouter);
 app.use("/api/v1/skill", skillRouter);
+app.use("/api/v1/blogs", blogsRouter);
 app.use(errorMiddleware);
 app.listen(3000, () => {
   console.log(`Server is running`);

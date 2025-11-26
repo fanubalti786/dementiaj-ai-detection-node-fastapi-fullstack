@@ -47,9 +47,7 @@ const loginUser = asyncHandler(async (req, res) => {
   if (!userExist) {
     throw new ErrorHandler("password or email incorrect", 404);
   }
-
   const isPasswordCorrect = await userExist.comparePassword(password);
-
   if (!isPasswordCorrect) {
     throw new ErrorHandler("email or password incorrect");
   }

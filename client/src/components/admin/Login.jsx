@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -30,13 +31,13 @@ export default function Login() {
           password,
         }),
       });
-      const data = await response.json();
+      const { data } = await response.json();
       if (response.ok) {
         localStorage.setItem("token", data.token);
         if (data.user) {
           localStorage.setItem("user", JSON.stringify(data.user));
         }
-        alert("Login successful!");
+        toast("Login successful!");
         navigate("/admin");
       } else {
         setError(data.message || "Login failed");
