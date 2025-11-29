@@ -1,4 +1,3 @@
-import React from "react";
 import { assets } from "../assets/assets";
 
 export default function Header() {
@@ -13,8 +12,10 @@ export default function Header() {
           <p>New: AI feature integrated</p>
           <img src={assets.star_icon} alt="" className="w-2.5" />
         </div>
-        <h1 className="text-3xl sm:text-6xl text-gray-700 font-semibold 
-        sm:leading-16 font-Poppins">
+        <h1
+          className="text-3xl sm:text-6xl text-gray-700 font-semibold 
+        sm:leading-16 font-Poppins"
+        >
           Your own <span className="text-primary ">blogging</span> <br />
           platform.
         </h1>
@@ -23,13 +24,6 @@ export default function Header() {
           write without filters. Whether it's one word or a thousand, your story
           start right here.
         </p>
-        <form className=" max-w-lg flex justify-between mx-auto bg-white
-        border border-gray-300 rounded mt-8">
-            <input type="text" name="" id=""  placeholder="search for blogs" required
-            className="w-full pl-4 outline-none"/>
-            <button type="submit" className="bg-primary text-white px-8 py-2 
-            m-1.5 rounded hover:scale-105 transition-all cursor-pointer">Search</button>
-        </form>
         <img
           src={assets.gradientBackground}
           alt=""

@@ -13,6 +13,7 @@ import Login from "./components/admin/Login";
 import About from "./pages/About";
 import ContactUs from "./pages/ContactUs";
 import Signup from "./components/admin/Signup";
+import ListUsers from "./pages/admin/ListUsers";
 
 // protected routes get token from local storage
 const ProtectedRoutes = ({ children }) => {
@@ -50,6 +51,7 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="addBlog" element={<AddBlog />} />
             <Route path="listBlog" element={<ListBlog />} />
+            <Route path="listUsers" element={<ListUsers />} />
             <Route path="comments" element={<Comments />} />
           </>
           {/* )} */}

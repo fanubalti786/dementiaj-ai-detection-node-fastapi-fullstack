@@ -75,12 +75,12 @@ const logoutUser = asyncHandler(async (req, res) => {
     .cookie("token", null, options)
     .json(new ApiResponse(200, null, "User Logged Out Successfully"));
 });
+const getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find({ type: "user" });
 
-const getUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.userId);
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "User fetched successfully"));
+    .json(new ApiResponse(200, users, "Users fetched successfully"));
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
@@ -271,10 +271,10 @@ export {
   registerUser,
   loginUser,
   logoutUser,
-  getUser,
   updateProfile,
   updatePassword,
   getUserForPortfolio,
   forgetPassword,
   resetPassword,
+  getAllUsers,
 };

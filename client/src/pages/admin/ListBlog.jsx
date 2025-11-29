@@ -12,11 +12,6 @@ export default function ListBlog() {
 
       const response = await fetch(
         "http://localhost:3000/api/v1/blogs/get-all",
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        },
       );
       const data = await response.json();
       if (!response.ok) {

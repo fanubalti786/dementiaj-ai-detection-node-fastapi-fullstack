@@ -1,17 +1,97 @@
-import React, { useState } from "react";
-import { blog_data, blogCategories } from "../assets/assets";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import BlogCard from "./BlogCard";
+import { blogCategories } from "../assets/assets";
 
 export default function BlogList() {
-  const [menu, setMenue] = useState("All");
+  const [menu, setMenu] = useState("All");
+  const [blogs, setBlogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
+
+  const fetchBlogs = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        "http://localhost:3000/api/v1/blogs/get-all",
+      );
+      const data = await response.json();
+      if (response.ok) {
+        console.log(data.blogs);
+        const publishedBlogs =
+          data.blogs?.filter((blog) => blog.isPublished)?.slice(0, 8) || [];
+        setBlogs(publishedBlogs);
+      }
+    } catch (err) {
+      console.error("Error fetching blogs:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    // Search is handled by filteredBlogs automatically
+  };
+
+  const filteredBlogs = blogs.filter((blog) => {
+    // Category filter
+    const categoryMatch = menu === "All" ? true : blog.category === menu;
+
+    // Search filter
+    const searchMatch =
+      searchQuery.trim() === ""
+        ? true
+        : blog.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          blog.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          blog.category?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return categoryMatch && searchMatch;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="text-gray-500">Loading blogs...</div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <div className="flex gap-4 justify-center my-10 sm:gap-8">
+      {/* Search Bar */}
+      <form
+        onSubmit={handleSearch}
+        className="max-w-lg flex justify-between mx-auto bg-white
+        border border-gray-300 rounded mt-8"
+      >
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search for blogs"
+          className="w-full pl-4 outline-none"
+        />
+        <button
+          type="submit"
+          className="bg-primary text-white px-8 py-2 
+            m-1.5 rounded hover:scale-105 transition-all cursor-pointer"
+        >
+          Search
+        </button>
+      </form>
+
+      {/* Category Filter */}
+      <div className="flex gap-4 justify-center my-10 sm:gap-8 flex-wrap">
         {blogCategories.map((item, index) => (
           <button
-            onClick={() => setMenue(item)}
-            className={`cursor-pointer text-gray-500 relative
+            key={index}
+            onClick={() => setMenu(item)}
+            className={`cursor-pointer text-gray-500 relative px-4 py-1
               ${
                 menu === item &&
                 "text-white px-5 pt-0.5 bg-primary rounded-full"
@@ -29,13 +109,46 @@ export default function BlogList() {
           </button>
         ))}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4
-       gap-8 mb-24 mx-8 sm:mx-16 xl:mx-40">
-        {blog_data?.filter((blog, index) => menu === "All"? true: blog.category === menu)
-        ?.map((blog, index) => (
-          <BlogCard key={index} blog={blog}/>
-        ))}
-      </div>
+
+      {/* Blog Grid or Empty State */}
+      {filteredBlogs.length > 0 ? (
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4
+         gap-8 mb-24 mx-8 sm:mx-16 xl:mx-40"
+        >
+          {filteredBlogs.map((blog, index) => (
+            <BlogCard key={blog._id || index} blog={blog} />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center min-h-[400px] mx-8">
+          <div className="bg-gray-50 rounded-lg p-12 text-center max-w-md">
+            <svg
+              className="mx-auto h-16 w-16 text-gray-400 mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+              />
+            </svg>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              No Blogs Found
+            </h3>
+            <p className="text-gray-600">
+              {searchQuery.trim() !== ""
+                ? `No blogs found matching "${searchQuery}"`
+                : menu === "All"
+                  ? "No published blogs available at the moment."
+                  : `No blogs found in the "${menu}" category.`}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -8,5 +8,5 @@ import {
 const router = express.Router();
 router.post("/add", isAuthenticated, addBlogs);
 router.post("/toggle-published/:id", isAuthenticated, togglePublished);
-router.get("/get-all", isAuthenticated, getAllBlogs);
+router.get("/get-all", getAllBlogs);
 export const blogsRouter = router;
