@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import useUserStore from "../../store/userStore";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -8,6 +9,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const setUser = useUserStore((state) => state.setUser);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,11 +36,9 @@ export default function Login() {
       const { data } = await response.json();
       if (response.ok) {
         localStorage.setItem("token", data.token);
-        if (data.user) {
-          localStorage.setItem("user", JSON.stringify(data.user));
-        }
+        setUser(data.user);
         toast("Login successful!");
-        navigate("/admin");
+        navigate("/dashboard");
       } else {
         setError(data.message || "Login failed");
       }

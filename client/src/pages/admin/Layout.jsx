@@ -1,11 +1,19 @@
-import React from "react";
 import { Outlet } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { assets } from "../../assets/assets";
 import Sidebar from "../../components/admin/Sidebar";
+import useUserStore from "../../store/userStore";
+
 export default function Layout() {
   const navigate = useNavigate();
+  const clearUser = useUserStore((state) => state.clearUser);
+
   const logout = () => {
+    navigate("/");
+    clearUser();
+    localStorage.removeItem("token");
+    useUserStore.persist.clearStorage();
+    clearUser();
     navigate("/");
   };
   return (
@@ -28,14 +36,12 @@ export default function Layout() {
         </button>
       </div>
 
-
       <div className="flex h-[calc(100vh-70px)] ">
-
-        <div className=""><Sidebar/></div>
-        < Outlet/>
-        
-        
-       </div>
+        <div className="">
+          <Sidebar />
+        </div>
+        <Outlet />
+      </div>
     </div>
   );
 }

@@ -1,4 +1,3 @@
-import React from "react";
 import "quill/dist/quill.snow.css";
 import { Navigate, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
@@ -14,6 +13,8 @@ import About from "./pages/About";
 import ContactUs from "./pages/ContactUs";
 import Signup from "./components/admin/Signup";
 import ListUsers from "./pages/admin/ListUsers";
+import DementiaResult from "./pages/user/DementiaResult";
+import DementiaForm from "./pages/user/DementiaForm";
 
 // protected routes get token from local storage
 const ProtectedRoutes = ({ children }) => {
@@ -37,24 +38,21 @@ export default function App() {
   return (
     <div>
       <Routes>
-        {/* Admin Routes */}
         <Route
-          path="/admin"
+          path="/dashboard"
           element={
             <ProtectedRoutes>
               <Layout />
             </ProtectedRoutes>
           }
         >
-          {/* {isLoggedIn && ( */}
-          <>
-            <Route index element={<Dashboard />} />
-            <Route path="addBlog" element={<AddBlog />} />
-            <Route path="listBlog" element={<ListBlog />} />
-            <Route path="listUsers" element={<ListUsers />} />
-            <Route path="comments" element={<Comments />} />
-          </>
-          {/* )} */}
+          <Route index element={<Dashboard />} />
+          <Route path="addBlog" element={<AddBlog />} />
+          <Route path="listBlog" element={<ListBlog />} />
+          <Route path="listUsers" element={<ListUsers />} />
+          <Route path="comments" element={<Comments />} />
+          <Route path="dementia/submit" element={<DementiaForm />} />
+          <Route path="dementia/all" element={<DementiaResult />} />
         </Route>
         {/* Normal Routes */}
         <Route path="/" element={<Home />} />
@@ -65,7 +63,7 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/test" element={<Test />} />
         <Route path="*" element={<NotFound />} />
-        <Route path="/admin/*" element={<AdminNotFound />} />
+        <Route path="/dashboard/*" element={<AdminNotFound />} />
       </Routes>
     </div>
   );
