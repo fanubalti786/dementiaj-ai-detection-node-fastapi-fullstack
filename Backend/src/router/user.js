@@ -9,6 +9,8 @@ import {
   forgetPassword,
   resetPassword,
   getAllUsers,
+  getAnalyses,
+  addAnalysicsDementaiaData,
 } from "../controllers/user.js";
 import { isAuthenticated } from "../middlewares/auth.js";
 
@@ -23,5 +25,7 @@ router.put("/update/password", isAuthenticated, updatePassword);
 router.get("/me/portfolio", getUserForPortfolio);
 router.post("/forget/password", isAuthenticated, forgetPassword);
 router.put("/password/reset/:token", isAuthenticated, resetPassword);
+router.post("/analyses/add", isAuthenticated, addAnalysicsDementaiaData);
+router.get("/analyses/get", isAuthenticated, getAnalyses);
 
 export const userRouter = router;

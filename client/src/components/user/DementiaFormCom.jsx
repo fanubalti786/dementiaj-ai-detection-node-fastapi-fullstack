@@ -1,31 +1,34 @@
-import { User, Brain, FileText } from "lucide-react";
+import { Brain } from "lucide-react";
+import { User, Activity } from "lucide-react";
 
-export function DementiaFormCom({ formData, handleChange, loading }) {
+export default function DementiaFormCom({ formData, handleChange, loading }) {
   return (
     <div className="space-y-6">
       <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <div className="flex items-center gap-3 mb-5 pb-3 ">
+        <div className="flex items-center gap-3 mb-5 pb-3">
           <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
             <User className="text-indigo-600" size={20} />
           </div>
           <h2 className="text-lg font-bold text-gray-800">
-            Personal Information
+            Patient Information
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Patient Name <span className="text-red-500">*</span>
+              Gender <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              name="patientName"
-              value={formData.patientName}
+            <select
+              name="Gender"
+              value={formData.Gender}
               onChange={(e) => handleChange(e.target)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition"
-              placeholder="Enter full name"
               disabled={loading}
-            />
+            >
+              <option value="">Select gender</option>
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+            </select>
           </div>
 
           <div>
@@ -34,12 +37,12 @@ export function DementiaFormCom({ formData, handleChange, loading }) {
             </label>
             <input
               type="number"
-              name="age"
-              value={formData.age}
+              name="Age"
+              value={formData.Age}
               onChange={(e) => handleChange(e.target)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition"
-              placeholder="Enter age"
-              min="1"
+              placeholder="Enter age (40-120)"
+              min="40"
               max="120"
               disabled={loading}
             />
@@ -47,33 +50,17 @@ export function DementiaFormCom({ formData, handleChange, loading }) {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Gender <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="gender"
-              value={formData.gender}
-              onChange={(e) => handleChange(e.target)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition"
-              disabled={loading}
-            >
-              <option value="">Select gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Contact Number
+              Years of Education <span className="text-red-500">*</span>
             </label>
             <input
-              type="tel"
-              name="contactNumber"
-              value={formData.contactNumber}
+              type="number"
+              name="EDUC"
+              value={formData.EDUC}
               onChange={(e) => handleChange(e.target)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition"
-              placeholder="Enter contact number"
+              placeholder="Years of education"
+              min="0"
+              max="30"
               disabled={loading}
             />
           </div>
@@ -86,153 +73,117 @@ export function DementiaFormCom({ formData, handleChange, loading }) {
             <Brain className="text-indigo-600" size={20} />
           </div>
           <h2 className="text-lg font-bold text-gray-800">
-            Cognitive Assessment
+            Clinical Assessment
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Memory Issues <span className="text-red-500">*</span>
+              MMSE Score <span className="text-red-500">*</span>
             </label>
-            <select
-              name="memoryIssues"
-              value={formData.memoryIssues}
+            <input
+              type="number"
+              name="MMSE"
+              value={formData.MMSE}
               onChange={(e) => handleChange(e.target)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition"
+              placeholder="Mini Mental Score (0-30)"
+              min="0"
+              max="30"
+              step="1"
               disabled={loading}
-            >
-              <option value="">Select level</option>
-              <option value="mild">Mild</option>
-              <option value="moderate">Moderate</option>
-              <option value="severe">Severe</option>
-            </select>
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Mini Mental State Examination score
+            </p>
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Confusion Level <span className="text-red-500">*</span>
+              CDR <span className="text-red-500">*</span>
             </label>
-            <select
-              name="confusionLevel"
-              value={formData.confusionLevel}
+            <input
+              type="number"
+              name="CDR"
+              value={formData.CDR}
               onChange={(e) => handleChange(e.target)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition"
+              placeholder="Clinical Dementia Rating (0-3)"
+              min="0"
+              max="3"
+              step="0.5"
               disabled={loading}
-            >
-              <option value="">Select level</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Orientation Issues <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="orientationIssues"
-              value={formData.orientationIssues}
-              onChange={(e) => handleChange(e.target)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition"
-              disabled={loading}
-            >
-              <option value="">Select level</option>
-              <option value="none">None</option>
-              <option value="occasional">Occasional</option>
-              <option value="frequent">Frequent</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Language Difficulties
-            </label>
-            <select
-              name="languageDifficulties"
-              value={formData.languageDifficulties}
-              onChange={(e) => handleChange(e.target)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition"
-              disabled={loading}
-            >
-              <option value="">Select level</option>
-              <option value="none">None</option>
-              <option value="mild">Mild</option>
-              <option value="moderate">Moderate</option>
-              <option value="severe">Severe</option>
-            </select>
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Clinical Dementia Rating (0, 0.5, 1, 2, or 3)
+            </p>
           </div>
         </div>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <div className="flex items-center gap-3 mb-5 pb-3 ">
+        <div className="flex items-center gap-3 mb-5 pb-3">
           <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-            <FileText className="text-indigo-600" size={20} />
+            <Activity className="text-indigo-600" size={20} />
           </div>
           <h2 className="text-lg font-bold text-gray-800">
-            Additional Information
+            Brain Imaging Measurements
           </h2>
         </div>
-        <div className="space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Daily Activities Impact <span className="text-red-500">*</span>
+              eTIV <span className="text-red-500">*</span>
             </label>
-            <textarea
-              name="dailyActivities"
-              value={formData.dailyActivities}
+            <input
+              type="number"
+              name="eTIV"
+              value={formData.eTIV}
               onChange={(e) => handleChange(e.target)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition resize-none"
-              rows="4"
-              placeholder="Describe how symptoms affect daily activities (cooking, dressing, managing finances, etc.)"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition"
+              placeholder="Estimated Total Intracranial Volume"
+              step="0.01"
               disabled={loading}
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Estimated Total Intracranial Volume (cm³)
+            </p>
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Behavioral Changes
+              nWBV <span className="text-red-500">*</span>
             </label>
-            <textarea
-              name="behavioralChanges"
-              value={formData.behavioralChanges}
+            <input
+              type="number"
+              name="nWBV"
+              value={formData.nWBV}
               onChange={(e) => handleChange(e.target)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition resize-none"
-              rows="3"
-              placeholder="Any mood swings, aggression, anxiety, or personality changes"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition"
+              placeholder="Normalized Whole Brain Volume"
+              step="0.0001"
               disabled={loading}
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Normalized Whole Brain Volume (ratio)
+            </p>
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Medical History
+              ASF <span className="text-red-500">*</span>
             </label>
-            <textarea
-              name="medicalHistory"
-              value={formData.medicalHistory}
+            <input
+              type="number"
+              name="ASF"
+              value={formData.ASF}
               onChange={(e) => handleChange(e.target)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition resize-none"
-              rows="3"
-              placeholder="Previous diagnoses, medications, family history of dementia"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition"
+              placeholder="Atlas Scaling Factor"
+              step="0.0001"
               disabled={loading}
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Additional Notes
-            </label>
-            <textarea
-              name="additionalNotes"
-              value={formData.additionalNotes}
-              onChange={(e) => handleChange(e.target)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition resize-none"
-              rows="3"
-              placeholder="Any other observations or concerns"
-              disabled={loading}
-            />
+            <p className="text-xs text-gray-500 mt-1">Atlas Scaling Factor</p>
           </div>
         </div>
       </div>

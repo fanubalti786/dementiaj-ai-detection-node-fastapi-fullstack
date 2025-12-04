@@ -1,91 +1,109 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ClipboardList, Search } from "lucide-react";
 import DementiaResultCard from "../../components/user/DementiaResultCard";
 
-const mockResults = [
-  {
-    id: 1,
-    patientName: "John Doe",
-    age: 72,
-    gender: "Male",
-    testDate: "2024-11-28",
-    memoryIssues: "Moderate",
-    confusionLevel: "Medium",
-    orientationIssues: "Occasional",
-    aiAnalysis:
-      "Patient shows moderate cognitive decline with memory lapses in recent events. Recommendation: Follow-up assessment in 3 months and consider cognitive therapy sessions.",
-    riskLevel: "Medium",
-    score: 65,
-  },
-  {
-    id: 2,
-    patientName: "Jane Smith",
-    age: 68,
-    gender: "Female",
-    testDate: "2024-11-27",
-    memoryIssues: "Mild",
-    confusionLevel: "Low",
-    orientationIssues: "None",
-    aiAnalysis:
-      "Patient demonstrates mild cognitive changes consistent with normal aging. Continue monitoring and encourage mental exercises and social engagement.",
-    riskLevel: "Low",
-    score: 82,
-  },
-  {
-    id: 3,
-    patientName: "Robert Johnson",
-    age: 75,
-    gender: "Male",
-    testDate: "2024-11-26",
-    memoryIssues: "Severe",
-    confusionLevel: "High",
-    orientationIssues: "Frequent",
-    aiAnalysis:
-      "Significant cognitive impairment detected. Immediate consultation with a neurologist recommended. Consider caregiver support and safety measures at home.",
-    riskLevel: "High",
-    score: 42,
-  },
-  {
-    id: 4,
-    patientName: "Mary Williams",
-    age: 70,
-    gender: "Female",
-    testDate: "2024-11-25",
-    memoryIssues: "Mild",
-    confusionLevel: "Low",
-    orientationIssues: "None",
-    aiAnalysis:
-      "Minimal cognitive concerns. Patient shows good retention and problem-solving abilities. Maintain healthy lifestyle and regular check-ups.",
-    riskLevel: "Low",
-    score: 88,
-  },
-  {
-    id: 5,
-    patientName: "David Brown",
-    age: 78,
-    gender: "Male",
-    testDate: "2024-11-24",
-    memoryIssues: "Moderate",
-    confusionLevel: "Medium",
-    orientationIssues: "Occasional",
-    aiAnalysis:
-      "Moderate cognitive impairment with notable decline in executive function. Recommend structured daily routine and regular cognitive exercises.",
-    riskLevel: "Medium",
-    score: 58,
-  },
-];
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const mapAnalysisToResult = (analysis) => {
+  const { inputData, results, analyzedAt, _id } = analysis;
+
+  return {
+    id: _id,
+    patientName: `Patient #${_id.slice(-6).toUpperCase()}`, // or add real name later
+    age: inputData.Age,
+    gender: inputData.Gender === "M" ? "Male" : "Female",
+    testDate: formatDate(analyzedAt),
+    riskLevel:
+      results.dementia_severity === "Normal" ||
+      results.dementia_severity === "Very Mild"
+        ? "Low"
+        : results.dementia_severity === "Mild" ||
+            results.dementia_severity === "Moderate"
+          ? "Medium"
+          : "High",
+    score: inputData.MMSE ? Math.round((inputData.MMSE / 30) * 100) : 50,
+    memoryIssues: results.dementia_severity.includes("Severe")
+      ? "Severe"
+      : results.dementia_severity.includes("Moderate")
+        ? "Moderate"
+        : results.dementia_severity.includes("Mild")
+          ? "Mild"
+          : "None",
+    confusionLevel: results.dementia_severity.includes("Severe")
+      ? "High"
+      : results.dementia_severity === "Moderate"
+        ? "Medium"
+        : "Low",
+    orientationIssues: results.dementia_severity.includes("Severe")
+      ? "Frequent"
+      : results.dementia_severity === "Moderate"
+        ? "Occasional"
+        : "None",
+    aiAnalysis: results.short_summary || results.diagnosis_reason,
+    inputData, // Pass full input
+    results, // Pass full results
+    fullReport: results.full_markdown_report,
+  };
+};
 
 export default function MyResults() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [results] = useState(mockResults);
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchAnalyses = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token"); // adjust based on your auth method
+
+        const response = await fetch(
+          "http://localhost:3000/api/v1/user/analyses/get",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch analyses: ${response.status} ${response.statusText}`,
+          );
+        }
+
+        const { data } = await response.json();
+        console.log(data);
+        const mappedResults = data?.map(mapAnalysisToResult);
+        setResults(mappedResults);
+      } catch (err) {
+        console.error("Failed to fetch analyses:", err);
+        setError(err.message || "Failed to load results");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalyses();
+  }, []);
+
   const filteredResults = results.filter(
     (result) =>
       result.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       result.testDate.includes(searchTerm),
   );
+
   return (
     <div className="min-h-[90vh] w-full overflow-y-auto py-8 px-12">
-      <div className="w-full mx-auto">
+      <div className="w-full mx-auto ">
         <div className="mb-12">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -97,19 +115,20 @@ export default function MyResults() {
                   My Test Results
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  View and download your dementia test results
+                  View and download your dementia assessment results
                 </p>
               </div>
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-500">Total Results</p>
               <p className="text-3xl font-bold text-indigo-600">
-                {filteredResults.length}
+                {loading ? "-" : filteredResults.length}
               </p>
             </div>
           </div>
         </div>
 
+        {/* Search Bar */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <div className="relative">
             <Search
@@ -126,23 +145,42 @@ export default function MyResults() {
           </div>
         </div>
 
-        <div className="space-y-5 grid grid-cols-2 max-lg:grid-cols-1 gap-6">
-          {filteredResults.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-16 text-center">
-              <ClipboardList className="mx-auto text-gray-300 mb-4" size={64} />
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                No results found
-              </h3>
-              <p className="text-gray-500">
-                Try adjusting your search criteria
-              </p>
-            </div>
-          ) : (
-            filteredResults.map((result) => (
-              <DementiaResultCard result={result} />
-            ))
-          )}
-        </div>
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-20">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+            <p className="mt-4 text-gray-600">Loading your results...</p>
+          </div>
+        )}
+
+        {error && !loading && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg text-center">
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {filteredResults.length === 0 ? (
+              <div className="col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-16 text-center">
+                <ClipboardList
+                  className="mx-auto text-gray-300 mb-4"
+                  size={64}
+                />
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                  No results found
+                </h3>
+                <p className="text-gray-500">
+                  Try adjusting your search criteria
+                </p>
+              </div>
+            ) : (
+              filteredResults.map((result) => (
+                <DementiaResultCard key={result.id} result={result} />
+              ))
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

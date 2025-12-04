@@ -1,10 +1,12 @@
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import ErrorHandler from "../utils/ApiError.js";
 import { User } from "../models/user.js";
+import { Analysis } from "../models/analysics.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/Cloudinary.js";
 import { sendEmail } from "../utils/send.Email.js";
 import crypto from "crypto";
+import axios from "axios";
 
 const registerUser = asyncHandler(async (req, res) => {
   const existedUser = await User.findOne({ email: req.body.email });
@@ -266,6 +268,113 @@ const resetPassword = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, user, "Password updated successfully"));
 });
+const addAnalysicsDementaiaData = asyncHandler(async (req, res) => {
+  const { inputData, results } = req.body;
+
+  if (
+    !inputData ||
+    !inputData.Gender ||
+    !inputData.Age ||
+    !inputData.EDUC ||
+    inputData.MMSE === undefined ||
+    inputData.CDR === undefined ||
+    !inputData.eTIV ||
+    !inputData.nWBV ||
+    !inputData.ASF
+  ) {
+    return res
+      .status(400)
+      .json(
+        new ApiResponse(400, null, "Please provide all required input data"),
+      );
+  }
+  if (
+    !results ||
+    results.has_dementia === undefined ||
+    !results.diagnosis_reason ||
+    !results.dementia_severity ||
+    !results.prevention_or_treatment
+  ) {
+    return res
+      .status(400)
+      .json(
+        new ApiResponse(400, null, "Please provide complete analysis results"),
+      );
+  }
+  if (inputData.Gender !== "M" && inputData.Gender !== "F") {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Gender must be M or F"));
+  }
+
+  const age = parseFloat(inputData.Age);
+  if (isNaN(age) || age < 40 || age > 120) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Age must be between 40 and 120"));
+  }
+
+  const educ = parseFloat(inputData.EDUC);
+  if (isNaN(educ) || educ < 0 || educ > 30) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Education must be between 0 and 30"));
+  }
+
+  const mmse = parseFloat(inputData.MMSE);
+  if (isNaN(mmse) || mmse < 0 || mmse > 30) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "MMSE must be between 0 and 30"));
+  }
+
+  const cdr = parseFloat(inputData.CDR);
+  if (isNaN(cdr) || cdr < 0 || cdr > 3) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "CDR must be between 0 and 3"));
+  }
+  const nwbv = parseFloat(inputData.nWBV);
+  if (isNaN(nwbv) || nwbv <= 0 || nwbv > 1) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "nWBV must be between 0 and 1"));
+  }
+  const newAnalysis = await Analysis.create({
+    userId: req.userId,
+    inputData: {
+      Gender: inputData.Gender,
+      Age: parseFloat(inputData.Age),
+      EDUC: parseFloat(inputData.EDUC),
+      MMSE: parseFloat(inputData.MMSE),
+      CDR: parseFloat(inputData.CDR),
+      eTIV: parseFloat(inputData.eTIV),
+      nWBV: parseFloat(inputData.nWBV),
+      ASF: parseFloat(inputData.ASF),
+    },
+    results: {
+      has_dementia: results.has_dementia,
+      diagnosis_reason: results.diagnosis_reason,
+      dementia_severity: results.dementia_severity,
+      prevention_or_treatment: results.prevention_or_treatment,
+      markdown_input_table: results.markdown_input_table,
+      markdown_score_table: results.markdown_score_table,
+      short_summary: results.short_summary,
+      full_markdown_report: results.full_markdown_report,
+    },
+  });
+  return res
+    .status(201)
+    .json(new ApiResponse(201, newAnalysis, "Analysis saved successfully"));
+});
+const getAnalyses = asyncHandler(async (req, res) => {
+  const analyses = await Analysis.find({ userId: req.userId }).sort(
+    "-createdAt",
+  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, analyses, "Analyses fetched successfully"));
+});
 
 export {
   registerUser,
@@ -277,4 +386,6 @@ export {
   forgetPassword,
   resetPassword,
   getAllUsers,
+  addAnalysicsDementaiaData,
+  getAnalyses,
 };
