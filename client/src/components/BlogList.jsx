@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Brain } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // Assuming you're using React Router
 import BlogCard from "./BlogCard";
 import { blogCategories } from "../assets/assets";
 
@@ -9,6 +11,8 @@ export default function BlogList() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetchBlogs();
   }, []);
@@ -17,7 +21,7 @@ export default function BlogList() {
     try {
       setLoading(true);
       const response = await fetch(
-        "http://localhost:3000/api/v1/blogs/get-all",
+        "http://localhost:3000/api/v1/blogs/get-all"
       );
       const data = await response.json();
       if (response.ok) {
@@ -33,9 +37,16 @@ export default function BlogList() {
     }
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    // Search is handled by filteredBlogs automatically
+  const handleStartScreening = () => {
+    // Option 1: Navigate to screening page
+    navigate("/login");
+    
+    // Option 2: Show onboarding modal if not logged in
+    // if (!user) {
+    //   showLoginModal();
+    // } else {
+    //   navigate("/assessment");
+    // }
   };
 
   const filteredBlogs = blogs.filter((blog) => {
@@ -64,27 +75,15 @@ export default function BlogList() {
   return (
     <div>
       {/* Search Bar */}
-      <form
-        onSubmit={handleSearch}
-        className="max-w-lg flex justify-between mx-auto bg-white
-        border border-gray-300 rounded mt-8"
+      <button
+        className="max-w-lg mx-auto mt-8 w-full bg-primary text-white 
+  py-3 rounded-lg hover:bg-primary/90 transition-colors font-medium 
+  flex items-center justify-center gap-2"
+        onClick={handleStartScreening}
       >
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search for blogs"
-          className="w-full pl-4 outline-none"
-        />
-        <button
-          type="submit"
-          className="bg-primary text-white px-8 py-2 
-            m-1.5 rounded hover:scale-105 transition-all cursor-pointer"
-        >
-          Search
-        </button>
-      </form>
-
+        <Brain className="w-5 h-5" />
+        Click to Start Dementia Screening
+      </button>
       {/* Category Filter */}
       <div className="flex gap-4 justify-center my-10 sm:gap-8 flex-wrap">
         {blogCategories.map((item, index) => (
@@ -143,8 +142,8 @@ export default function BlogList() {
               {searchQuery.trim() !== ""
                 ? `No blogs found matching "${searchQuery}"`
                 : menu === "All"
-                  ? "No published blogs available at the moment."
-                  : `No blogs found in the "${menu}" category.`}
+                ? "No published blogs available at the moment."
+                : `No blogs found in the "${menu}" category.`}
             </p>
           </div>
         </div>
