@@ -62,16 +62,16 @@ export const blogCategories = [
   "All",
   "Prevention",
   "Caregiving",
-  "Research",
-  "Living Well",
+  "Behavior",
   "Early Detection",
+  "Research",
 ];
 
 export const blog_data = [
   {
     _id: "6805ee7dd8f584af5da78d37",
     title: "Understanding Early Signs of Dementia: What to Look For",
-    ption:
+    description:
       "<h1>Underdescristanding Early Signs of Dementia: What to Look For</h1><p>Early detection of dementia can make a significant difference in managing the condition and planning for the future. Recognizing the warning signs is the first step toward getting proper care and support.</p><h2>1. Memory Loss That Disrupts Daily Life</h2><p>Forgetting recently learned information, important dates, or asking the same questions repeatedly. This goes beyond occasional forgetfulness that comes with normal aging.</p><h2>2. Difficulty Planning or Solving Problems</h2><p>Trouble following a familiar recipe, keeping track of monthly bills, or concentrating on tasks that were once routine. Taking much longer to do things than before.</p><h2>3. Confusion with Time or Place</h2><p>Losing track of dates, seasons, or the passage of time. Sometimes forgetting where they are or how they got there.</p><h2>4. Changes in Mood and Personality</h2><p>Becoming confused, suspicious, depressed, fearful, or anxious. Getting easily upset in places outside their comfort zone.</p><h2>5. Difficulty Completing Familiar Tasks</h2><p>Trouble driving to a familiar location, organizing a grocery list, or remembering the rules of a favorite game.</p><h2>6. Problems with Words in Speaking or Writing</h2><p>Struggling with vocabulary, finding the right word, or calling things by the wrong name. Conversations may become difficult to follow.</p><h2>7. Misplacing Things</h2><p>Putting things in unusual places and being unable to retrace steps to find them. May accuse others of stealing, especially as the condition progresses.</p><h2>8. Decreased or Poor Judgment</h2><p>Changes in judgment or decision-making, such as giving large amounts of money to telemarketers or paying less attention to grooming.</p><h2>9. Withdrawal from Social Activities</h2><p>Removing themselves from hobbies, social activities, or work projects. May have trouble keeping up with conversations or activities they once enjoyed.</p><h2>10. When to See a Doctor</h2><p>If you notice several of these signs in yourself or a loved one, schedule an appointment with a healthcare provider. Early diagnosis allows for better treatment options and planning for the future.</p><p><strong>Remember</strong>: Everyone experiences occasional forgetfulness. However, if these symptoms are persistent and interfere with daily life, it's important to seek professional evaluation.</p>",
     category: "Early Detection",
     image: blog_pic_1,
@@ -105,10 +105,8 @@ export const blog_data = [
     updatedAt: "2025-04-24T08:20:36.187Z",
     __v: 0,
     isPublished: true,
-    subTitle:
-      "Nutrition strategies to support cognitive health and reduce risk",
+    subTitle: "Nutrition strategies to support cognitive health and reduce risk",
   },
-
   {
     _id: "6805f307d8f584af5da78d3f",
     title: "Exercise and Brain Health: Moving to Prevent Dementia",
@@ -120,22 +118,21 @@ export const blog_data = [
     updatedAt: "2025-04-24T08:32:42.649Z",
     __v: 0,
     isPublished: true,
-    subTitle:
-      "How physical activity protects cognitive function and reduces risk",
+    subTitle: "How physical activity protects cognitive function and reduces risk",
   },
+  // Updated remaining blogs
   {
     _id: "6805f324d8f584af5da78d41",
     title: "Managing Behavioral Changes in Dementia: A Caregiver's Guide",
     description:
       "<h1>Managing Behavioral Changes in Dementia: A Caregiver's Guide</h1><p>Behavioral changes are common in dementia and can be one of the most challenging aspects of caregiving. Understanding why they occur and how to respond can make a significant difference.</p><h2>1. Understanding the Root Causes</h2><p>Behaviors are often communication of unmet needs:</p><ol><li>Physical discomfort (pain, hunger, temperature)</li><li>Emotional distress (fear, anxiety, confusion)</li><li>Environmental triggers (noise, too many people)</li><li>Medication side effects</li><li>Overstimulation or understimulation</li><li>Changes in routine</li></ol><h2>2. Common Behavioral Changes</h2><p><strong>Aggression or Agitation:</strong></p><ol><li>May result from frustration or feeling threatened</li><li>Stay calm and give space</li><li>Identify and remove triggers</li><li>Use distraction and redirection</li></ol><p><strong>Wandering:</strong></p><ol><li>Install safety measures (alarms, locks)</li><li>Ensure ID bracelet is worn</li><li>Address possible causes (boredom, searching for something)</li><li>Provide safe spaces to walk</li></ol><p><strong>Sundowning (late afternoon/evening confusion):</strong></p><ol><li>Increase lighting before sunset</li><li>Maintain consistent routines</li><li>Limit caffeine and sugar</li><li>Ensure adequate daytime activity</li></ol><p><strong>Repetitive Actions or Questions:</strong></p><ol><li>Answer patiently each time</li><li>Look for underlying anxiety or need</li><li>Provide reassurance and comfort</li><li>Use written notes or reminders if helpful</li></ol><h2>3. The ABC Approach</h2><p><strong>A - Antecedent:</strong> What happened before?</p><p><strong>B - Behavior:</strong> What exactly occurred?</p><p><strong>C - Consequence:</strong> What happened after?</p><p>Tracking patterns helps identify triggers and solutions.</p><h2>4. Prevention Strategies</h2><ol><li>Maintain consistent daily routines</li><li>Ensure physical comfort (toileting, nutrition, pain management)</li><li>Provide meaningful activities</li><li>Create a calm environment</li><li>Allow adequate rest</li><li>Avoid arguing or confrontation</li></ol><h2>5. Response Techniques</h2><ol><li>Stay calm and speak softly</li><li>Validate their feelings</li><li>Use distraction or redirection</li><li>Give simple choices</li><li>Allow time to respond</li><li>Use gentle touch if appropriate</li><li>Step away if you need a break</li></ol><h2>6. When to Seek Help</h2><ol><li>Behaviors pose safety risks</li><li>You're feeling overwhelmed or burned out</li><li>Sudden changes in behavior</li><li>Suspected medication side effects</li><li>Signs of depression or severe anxiety</li></ol><p><strong>Remember:</strong> Difficult behaviors are symptoms of the disease, not intentional actions. Your calm, patient response can significantly reduce frequency and intensity of challenging behaviors. Don't hesitate to seek support from healthcare providers, support groups, or respite care when needed.</p>",
-    category: "Caregiving",
+    category: "Behavior",
     image: blog_pic_6,
     createdAt: "2025-04-21T07:26:28.058Z",
     updatedAt: "2025-04-24T09:32:08.179Z",
     __v: 0,
     isPublished: true,
-    subTitle:
-      "Strategies for understanding and responding to challenging behaviors",
+    subTitle: "Strategies for understanding and responding to challenging behaviors",
   },
   {
     _id: "68062afc8474108ecb7d7944",
@@ -164,6 +161,7 @@ export const blog_data = [
     subTitle: "Strategies for meaningful living after a dementia diagnosis",
   },
 ];
+
 export const comments_data = [
   {
     _id: "6811ed9e7836a82ba747cb25",
