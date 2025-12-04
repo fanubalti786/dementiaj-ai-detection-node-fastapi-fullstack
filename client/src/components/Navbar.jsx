@@ -60,13 +60,13 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-2">
           <button
             onClick={() => navigate("/login")}
-            className="text-xs font-semibold text-gray-700 hover:text-primary px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-all duration-200"
+            className="cursor-point text-xs font-semibold text-gray-700 hover:text-primary px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-all duration-200"
           >
             Login
           </button>
           <button
             onClick={() => navigate("/signup")}
-            className="text-xs font-semibold bg-primary hover:bg-primary/90 text-white px-4 py-1.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+            className=" cursor-pointer text-xs font-semibold bg-primary hover:bg-primary/90 text-white px-4 py-1.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
           >
             Sign Up
           </button>
