@@ -6,12 +6,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import fileUpload from "express-fileupload";
 import { errorMiddleware } from "./middlewares/error.js";
-import { messageRouter } from "./router/message.js";
 import { userRouter } from "./router/user.js";
-import { timeLineRouter } from "./router/timeLine.js";
-import { applicationRouter } from "./router/application.js";
-import { projectRouter } from "./router/project.js";
-import { skillRouter } from "./router/skill.js";
 
 import "./database/db.js";
 import { blogsRouter } from "./router/blogsRouter.js";
@@ -38,14 +33,10 @@ app.use(
   }),
 );
 
-app.use("/api/v1/message", messageRouter);
 app.use("/api/v1/user", userRouter);
-app.use("/api/v1/timeLine", timeLineRouter);
-app.use("/api/v1/application", applicationRouter);
-app.use("/api/v1/project", projectRouter);
-app.use("/api/v1/skill", skillRouter);
 app.use("/api/v1/blogs", blogsRouter);
 app.use(errorMiddleware);
+
 app.listen(3000, () => {
   console.log(`Server is running`);
 });

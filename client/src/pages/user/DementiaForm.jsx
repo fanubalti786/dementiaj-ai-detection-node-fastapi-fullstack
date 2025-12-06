@@ -26,6 +26,7 @@ export default function DementiaForm() {
       [name]: value,
     }));
   };
+
   const validateFormData = (data) => {
     if (
       !data.Gender ||
@@ -72,6 +73,7 @@ export default function DementiaForm() {
     }
     return null;
   };
+
   const handleSubmit = async () => {
     const validationError = validateFormData(formData);
     if (validationError) {
@@ -91,6 +93,7 @@ export default function DementiaForm() {
         nWBV: parseFloat(formData.nWBV),
         ASF: parseFloat(formData.ASF),
       };
+      console.log("hello")
       const dementiaResponse = await fetch(
         "https://dimentia-detection.onrender.com/analyze",
         {
@@ -101,6 +104,7 @@ export default function DementiaForm() {
           body: JSON.stringify(analysisData),
         },
       );
+      console.log("buy")
       if (!dementiaResponse.ok) {
         throw new Error(`Dementia API Error: ${dementiaResponse.status}`);
       }
@@ -130,7 +134,7 @@ export default function DementiaForm() {
         );
       }
       toast.success("Analysis Complete!");
-      handleReset();
+   
       setResult(dementiaData.dementia_result);
       const patientName = `Patient_${analysisData.Age}_${analysisData.Gender}`;
       const pdfResult = generateDementiaPDF(

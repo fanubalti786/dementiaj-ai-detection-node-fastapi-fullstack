@@ -17,7 +17,7 @@ export default function Sidebar() {
       label: "Dashboard",
       icon: <Home size={20} />,
       path: "/dashboard",
-      roles: ["admin", "user"],
+      roles: ["admin"],
     },
     {
       label: "Add Blog",

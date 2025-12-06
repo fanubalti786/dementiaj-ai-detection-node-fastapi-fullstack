@@ -12,6 +12,7 @@ const formatDate = (dateString) => {
 
 const mapAnalysisToResult = (analysis) => {
   const { inputData, results, analyzedAt, _id } = analysis;
+  console.log(results)
 
   return {
     id: _id,
@@ -19,14 +20,7 @@ const mapAnalysisToResult = (analysis) => {
     age: inputData.Age,
     gender: inputData.Gender === "M" ? "Male" : "Female",
     testDate: formatDate(analyzedAt),
-    riskLevel:
-      results.dementia_severity === "Normal" ||
-      results.dementia_severity === "Very Mild"
-        ? "Low"
-        : results.dementia_severity === "Mild" ||
-            results.dementia_severity === "Moderate"
-          ? "Medium"
-          : "High",
+    riskLevel:results.dementia_severity,
     score: inputData.MMSE ? Math.round((inputData.MMSE / 30) * 100) : 50,
     memoryIssues: results.dementia_severity.includes("Severe")
       ? "Severe"

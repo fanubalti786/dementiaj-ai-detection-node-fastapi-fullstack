@@ -33,18 +33,20 @@ export default function Login() {
           password,
         }),
       });
-      const { data } = await response.json();
+      const data = await response.json();
+  
       if (response.ok) {
-        localStorage.setItem("token", data.token);
-        setUser(data.user);
+        localStorage.setItem("token", data.data.token);
+        setUser(data.data.user);
         toast("Login successful!");
-        navigate("/dashboard");
+        const navigateEndPoint = data.data?.user.type == "user" ? "/dashboard/dementia/submit" : "/dashboard";
+        navigate(navigateEndPoint);
       } else {
-        setError(data.message || "Login failed");
+        setError(data.message ||  "Login failed");
       }
     } catch (err) {
       setError("An error occurred. Please try again.");
-      console.error(err);
+      console.log(err);
     } finally {
       setLoading(false);
     }
