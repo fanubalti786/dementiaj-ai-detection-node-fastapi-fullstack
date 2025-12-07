@@ -10,6 +10,7 @@ import { userRouter } from "./router/user.js";
 
 import "./database/db.js";
 import { blogsRouter } from "./router/blogsRouter.js";
+import { contactRouter } from "./router/contact.js";
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use(
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/blogs", blogsRouter);
+app.use("/api/v1/contact", contactRouter);
 app.use(errorMiddleware);
 
 app.listen(3000, () => {

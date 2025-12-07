@@ -1,1131 +1,773 @@
-// ========================
-// UTILS: utils/pdfGenerator.js
-// ========================
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-
-// ===== Theme Configuration =====
-const theme = {
-  primary: [15, 41, 84], // Dark blue
-  secondary: [33, 133, 208], // Blue
-  success: [16, 185, 129], // Green
-  danger: [239, 68, 68], // Red
-  warning: [245, 158, 11], // Orange
-  gray: [107, 114, 128], // Gray
-  lightGray: [243, 244, 246], // Light gray
-  white: [255, 255, 255]
-};
-
-// ===== Helper: Smart Text Wrapping =====
-const addTextWithPageBreak = (doc, text, x, y, maxWidth, pageHeight, margin = 20, lineHeight = 6) => {
-  const lines = doc.splitTextToSize(text, maxWidth);
-  lines.forEach(line => {
-    if (y + lineHeight > pageHeight - margin) {
-      doc.addPage();
-      y = margin;
-    }
-    doc.text(line, x, y);
-    y += lineHeight;
-  });
-  return y;
-};
-
-// ===== Helper: Add Smart Text =====
-const addSmartText = (doc, text, x, y, maxWidth, maxHeight, lineHeight = 7, margin = 5) => {
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const lines = doc.splitTextToSize(text, maxWidth);
-  const neededHeight = lines.length * lineHeight + margin;
-  
-  if (y + neededHeight > maxHeight - margin) {
-    return { y: y, fits: false, lines: lines };
-  }
-  
-  lines.forEach(line => {
-    doc.text(line, x, y);
-    y += lineHeight;
-  });
-  
-  return { y: y + margin, fits: true, lines: lines };
-};
-
-// ========================
-// 1. Original Function (Basic Dementia PDF)
-// ========================
-export const generateDementiaPDF = (dementiaResult, inputData, patientName = "Patient") => {
+import { marked } from "marked";
+export const generateDementiaPDF = (
+  dementiaResult,
+  inputData,
+  patientName = "Patient",
+) => {
   try {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const leftMargin = 15;
-    const rightMargin = 15;
-    const contentWidth = pageWidth - leftMargin - rightMargin;
-    let y = 20;
+    const margin = 18;
+    const contentWidth = pageWidth - margin * 2;
+    let y = 50;
 
-    // ===== HEADER =====
-    doc.setFillColor(79, 70, 229);
-    doc.rect(0, 0, pageWidth, 35, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.setFont(undefined, "bold");
-    doc.text("Dementia Analysis Report", pageWidth / 2, 22, { align: "center" });
-    y = 45;
-
-    // ===== PATIENT INFO =====
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(14);
-    doc.setFont(undefined, "bold");
-    doc.text("Patient Information", leftMargin, y);
-    y += 8;
-
-    const patientInfo = [
-      ["Patient Name:", patientName],
-      ["Date of Analysis:", new Date().toLocaleDateString()],
-      ["Time:", new Date().toLocaleTimeString()],
-    ];
-
-    autoTable(doc, {
-      startY: y,
-      head: [],
-      body: patientInfo,
-      theme: "plain",
-      styles: { fontSize: 10, cellPadding: 3 },
-      columnStyles: { 0: { fontStyle: "bold", cellWidth: 45 }, 1: { cellWidth: "auto" } },
-      margin: { left: leftMargin, right: rightMargin },
-    });
-
-    y = doc.lastAutoTable.finalY + 12;
-
-    // ===== INPUT DATA TABLE =====
-    doc.setFontSize(14);
-    doc.setFont(undefined, "bold");
-    doc.text("Clinical Input Data", leftMargin, y);
-    y += 3;
-
-    const inputTableData = [
-      ["Gender", inputData.Gender],
-      ["Age", inputData.Age.toString()],
-      ["Education (years)", inputData.EDUC.toString()],
-      ["MMSE Score", inputData.MMSE.toString()],
-      ["CDR", inputData.CDR.toString()],
-      ["eTIV", inputData.eTIV.toString()],
-      ["nWBV", inputData.nWBV.toString()],
-      ["ASF", inputData.ASF.toString()],
-    ];
-
-    autoTable(doc, {
-      startY: y,
-      head: [],
-      body: inputTableData,
-      theme: "plain",
-      styles: { fontSize: 10, cellPadding: 3 },
-      columnStyles: { 0: { fontStyle: "bold", cellWidth: 45 }, 1: { cellWidth: "auto" } },
-      margin: { left: leftMargin, right: rightMargin },
-    });
-
-    y = doc.lastAutoTable.finalY + 12;
-
-    // ===== DIAGNOSIS SECTION =====
-    doc.setFontSize(14);
-    doc.setFont(undefined, "bold");
-    doc.text("Diagnosis", leftMargin, y);
-    y += 8;
-    doc.setFontSize(11);
-
-    const diagnosisColor = dementiaResult.has_dementia ? [220, 38, 38] : [34, 197, 94];
-    doc.setTextColor(...diagnosisColor);
-    doc.setFont(undefined, "bold");
-    doc.text(`Status: ${dementiaResult.has_dementia ? "Dementia Detected" : "No Dementia Detected"}`, leftMargin, y);
-
-    y += 8;
-    doc.setTextColor(0, 0, 0);
-    doc.setFont(undefined, "bold");
-    doc.text(`Severity: ${dementiaResult.dementia_severity}`, leftMargin, y);
-    y += 12;
-
-    // ===== SUMMARY =====
-    doc.setFontSize(14);
-    doc.setFont(undefined, "bold");
-    doc.text("Summary", leftMargin, y);
-    y += 6;
-    doc.setFontSize(10);
-    doc.setFont(undefined, "normal");
-    y = addTextWithPageBreak(doc, dementiaResult.short_summary, leftMargin, y, contentWidth, pageHeight);
-
-    // ===== DETAILED ANALYSIS =====
-    doc.setFontSize(14);
-    doc.setFont(undefined, "bold");
-    doc.text("Detailed Analysis", leftMargin, y);
-    y += 6;
-    doc.setFontSize(10);
-    doc.setFont(undefined, "normal");
-    y = addTextWithPageBreak(doc, dementiaResult.diagnosis_reason, leftMargin, y, contentWidth, pageHeight);
-
-    // ===== PREVENTION/TREATMENT =====
-    doc.setFontSize(14);
-    doc.setFont(undefined, "bold");
-    doc.text("Prevention & Treatment Recommendations", leftMargin, y);
-    y += 6;
-    doc.setFontSize(10);
-    doc.setFont(undefined, "normal");
-    y = addTextWithPageBreak(doc, dementiaResult.prevention_or_treatment, leftMargin, y, contentWidth, pageHeight);
-
-    // ===== FOOTER =====
-    const totalPages = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(128, 128, 128);
-      doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: "center" });
-      const footerText = doc.splitTextToSize(
-        "This report is generated for medical reference only. Please consult with a healthcare professional.",
-        contentWidth
-      );
-      doc.text(footerText, pageWidth / 2, pageHeight - 5, { align: "center" });
-    }
-
-    // ===== SAVE PDF =====
-    const fileName = `Dementia_Analysis_${patientName.replace(/\s+/g, "_")}_${new Date().getTime()}.pdf`;
-    doc.save(fileName);
-
-    return { success: true, fileName };
-  } catch (error) {
-    console.error("PDF Generation Error:", error);
-    return { success: false, error: error.message };
-  }
-};
-
-// ========================
-// 2. Detailed Dementia PDF (Full Markdown Style)
-// ========================
-export const generateDetailedDementiaPDF = (dementiaResult, patientName = "Patient") => {
-  try {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 25;
-    const contentWidth = pageWidth - (margin * 2);
-    let y = 55;
-
-    // Helper function to check if we need a new page
-    const checkPageBreak = (requiredSpace = 20) => {
-      if (y + requiredSpace > pageHeight - 30) {
+    const checkPageBreak = (space = 20) => {
+      if (y + space > pageHeight - 22) {
         doc.addPage();
+        addFooter();
         y = margin;
         return true;
       }
       return false;
     };
 
-    // Helper function to add wrapped text
-    const addWrappedText = (text, x, yPos, maxWidth, lineHeight = 7) => {
-      const lines = doc.splitTextToSize(text, maxWidth);
-      lines.forEach((line, index) => {
-        if (checkPageBreak()) {
-          yPos = y;
-        }
-        doc.text(line, x, yPos + (index * lineHeight));
+    const addWrappedText = (text, fontSize = 10) => {
+      doc.setFontSize(fontSize);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(30, 41, 59);
+      const lines = doc.splitTextToSize(text, contentWidth - 2);
+      lines.forEach((line) => {
+        checkPageBreak(6);
+        doc.text(line, margin, y);
+        y += 5.5;
       });
-      return yPos + (lines.length * lineHeight);
+      y += 3;
     };
 
-    // ===== MODERN HEADER =====
-    doc.setFillColor(79, 70, 229);
-    doc.rect(0, 0, pageWidth, 45, "F");
-    
+    const addFooter = () => {
+      const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+      const totalPages = doc.internal.getNumberOfPages();
+
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(0.5);
+      doc.line(margin, pageHeight - 18, pageWidth - margin, pageHeight - 18);
+
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "italic");
+      doc.text(
+        "This report is for medical reference only. Please consult with a qualified healthcare professional.",
+        pageWidth / 2,
+        pageHeight - 10,
+        { align: "center" },
+      );
+
+      doc.setFont("helvetica", "bold");
+      doc.text(
+        `Page ${currentPage} of ${totalPages}`,
+        pageWidth / 2,
+        pageHeight - 5,
+        { align: "center" },
+      );
+    };
+
+    // ===== HEADER =====
+    doc.setFillColor(67, 56, 202);
+    doc.rect(0, 0, pageWidth, 42, "F");
+
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(26);
+    doc.setFontSize(24);
     doc.setFont("helvetica", "bold");
-    doc.text("Comprehensive Dementia Report", pageWidth / 2, 28, { align: "center" });
+    doc.text("Dementia Analysis Report", pageWidth / 2, 20, {
+      align: "center",
+    });
 
-    // ===== REPORT INFO SECTION =====
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text("Report Information", margin, y);
-    y += 8;
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text("Clinical Diagnostic Summary", pageWidth / 2, 30, {
+      align: "center",
+    });
 
-    // Info box with subtle background
-    doc.setFillColor(248, 250, 252);
-    doc.roundedRect(margin, y, contentWidth, 32, 3, 3, "F");
-    
+    // ===== INFO BOX =====
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(margin, y, contentWidth, 22, 2, 2, "F");
+
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, y, contentWidth, 22, 2, 2, "S");
+
     doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(71, 85, 105);
-    
-    y += 8;
+    doc.setTextColor(51, 65, 85);
+    const col1X = margin + 5;
+    const col2X = margin + contentWidth / 2 + 5;
+
     doc.setFont("helvetica", "bold");
-    doc.text("Date:", margin + 5, y);
+    doc.text("Patient Name:", col1X, y + 7);
     doc.setFont("helvetica", "normal");
-    doc.text(new Date().toLocaleDateString(), margin + 35, y);
-    
-    y += 8;
+    doc.text(patientName, col1X + 35, y + 7);
+
     doc.setFont("helvetica", "bold");
-    doc.text("Time:", margin + 5, y);
+    doc.text("Report Date:", col1X, y + 15);
     doc.setFont("helvetica", "normal");
-    doc.text(new Date().toLocaleTimeString(), margin + 35, y);
-    
-    y += 8;
+    doc.text(
+      new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
+      col1X + 35,
+      y + 15,
+    );
+
     doc.setFont("helvetica", "bold");
-    doc.text("Patient:", margin + 5, y);
+    doc.text("Report Time:", col2X, y + 7);
     doc.setFont("helvetica", "normal");
-    doc.text(patientName, margin + 35, y);
+    doc.text(
+      new Date().toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }),
+      col2X + 35,
+      y + 7,
+    );
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Report ID:", col2X, y + 15);
+    doc.setFont("helvetica", "normal");
+    doc.text(`DEM-${Date.now().toString().slice(-8)}`, col2X + 35, y + 15);
+
+    y += 32;
+
+    // ===== CLINICAL INPUT DATA =====
+    checkPageBreak(45);
+
+    doc.setFillColor(237, 233, 254);
+    doc.roundedRect(margin, y - 2, contentWidth, 10, 1, 1, "F");
+
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(67, 56, 202);
+    doc.text("Clinical Input Data", margin + 3, y + 5);
+    y += 13;
+    doc.setTextColor(30, 41, 59);
+
+    const inputFields = [
+      { label: "Gender", value: inputData.Gender },
+      { label: "Age", value: inputData.Age.toString() },
+      { label: "Education (years)", value: inputData.EDUC.toString() },
+      { label: "MMSE Score", value: inputData.MMSE.toString() },
+      { label: "CDR", value: inputData.CDR.toString() },
+      { label: "eTIV", value: inputData.eTIV.toString() },
+      { label: "nWBV", value: inputData.nWBV.toString() },
+      { label: "ASF", value: inputData.ASF.toString() },
+    ];
+
+    const colWidth = contentWidth / 3;
+    const rowHeight = 12;
+    let col = 0;
+    let row = 0;
+    const startY = y;
+
+    inputFields.forEach((field, idx) => {
+      const x = margin + col * colWidth;
+      const currentY = startY + row * rowHeight;
+
+      if (idx % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+      } else {
+        doc.setFillColor(255, 255, 255);
+      }
+      doc.rect(x, currentY, colWidth, rowHeight, "F");
+
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.2);
+      doc.rect(x, currentY, colWidth, rowHeight);
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(71, 85, 105);
+      doc.text(field.label + ":", x + 2, currentY + 5);
+
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(30, 41, 59);
+      doc.text(field.value, x + 2, currentY + 9);
+
+      col++;
+      if (col >= 3) {
+        col = 0;
+        row++;
+      }
+    });
+
+    y = startY + Math.ceil(inputFields.length / 3) * rowHeight + 15;
+
+    // ===== DIAGNOSIS =====
+    checkPageBreak(30);
+
+    doc.setFillColor(237, 233, 254);
+    doc.roundedRect(margin, y - 2, contentWidth, 10, 1, 1, "F");
+
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(67, 56, 202);
+    doc.text("Diagnosis", margin + 3, y + 5);
+    y += 15;
+
+    const statusColor = dementiaResult.has_dementia
+      ? [220, 38, 38]
+      : [34, 197, 94];
+    const statusBg = dementiaResult.has_dementia
+      ? [254, 226, 226]
+      : [220, 252, 231];
+
+    doc.setFillColor(...statusBg);
+    doc.roundedRect(margin, y, contentWidth / 2 - 5, 12, 2, 2, "F");
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...statusColor);
+    doc.text(
+      `Status: ${dementiaResult.has_dementia ? "Dementia Detected" : "No Dementia Detected"}`,
+      margin + 3,
+      y + 7,
+    );
+
+    doc.setFillColor(254, 243, 199);
+    doc.roundedRect(
+      margin + contentWidth / 2 + 5,
+      y,
+      contentWidth / 2 - 5,
+      12,
+      2,
+      2,
+      "F",
+    );
+
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(161, 98, 7);
+    doc.text(
+      `Severity: ${dementiaResult.dementia_severity}`,
+      margin + contentWidth / 2 + 8,
+      y + 7,
+    );
 
     y += 20;
 
-    // ===== PARSE AND RENDER MARKDOWN REPORT =====
-    const report = dementiaResult.fullReport || dementiaResult.results?.full_markdown_report;
-    
-    if (report) {
-      const lines = report.split("\n");
-      
-      lines.forEach((line, index) => {
-        const trimmedLine = line.trim();
-        
-        // Main heading (H1)
-        if (line.startsWith("# ")) {
-          checkPageBreak(25);
-          y += 5;
-          doc.setFillColor(79, 70, 229);
-          doc.rect(margin, y - 2, contentWidth, 12, "F");
-          doc.setFontSize(18);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(255, 255, 255);
-          doc.text(line.replace("# ", ""), margin + 3, y + 6);
-          doc.setTextColor(0, 0, 0);
-          y += 18;
-        }
-        // Section heading (H2)
-        else if (line.startsWith("## ")) {
-          checkPageBreak(20);
-          y += 8;
-          doc.setFontSize(14);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(79, 70, 229);
-          doc.text(line.replace("## ", ""), margin, y);
-          y += 10;
-          doc.setTextColor(0, 0, 0);
-        }
-        // Sub-heading (H3)
-        else if (line.startsWith("### ")) {
-          checkPageBreak(15);
-          y += 5;
-          doc.setFontSize(12);
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(51, 65, 85);
-          doc.text(line.replace("### ", ""), margin, y);
-          y += 8;
-          doc.setTextColor(0, 0, 0);
-        }
-        // Bullet points
-        else if ((line.startsWith("- ") || line.startsWith("* ")) && trimmedLine) {
-          checkPageBreak(15);
-          doc.setFontSize(10);
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(51, 65, 85);
-          
-          // Draw bullet point
-          doc.circle(margin + 2, y - 1.5, 0.8, "F");
-          
-          // Wrap and render text
-          const text = line.replace(/^[-*]\s*/, "").trim();
-          const wrappedLines = doc.splitTextToSize(text, contentWidth - 15);
-          
-          wrappedLines.forEach((wrappedLine, idx) => {
-            if (idx > 0) checkPageBreak();
-            doc.text(wrappedLine, margin + 8, y);
-            y += 6;
-          });
-          
-          y += 2; // Extra spacing after bullet
-        }
-        // Empty line
-        else if (trimmedLine === "") {
-          y += 4;
-        }
-        // Regular paragraph text
-        else if (trimmedLine && !line.includes("|")) {
-          checkPageBreak(15);
-          doc.setFontSize(10);
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(51, 65, 85);
-          
-          const wrappedLines = doc.splitTextToSize(trimmedLine, contentWidth);
-          wrappedLines.forEach((wrappedLine) => {
-            checkPageBreak();
-            doc.text(wrappedLine, margin, y);
-            y += 6;
-          });
-          y += 3; // Paragraph spacing
-        }
-      });
-    }
+    // ===== SUMMARY =====
+    checkPageBreak(25);
 
-    // ===== PROFESSIONAL FOOTER ON ALL PAGES =====
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
+    doc.setFillColor(237, 233, 254);
+    doc.roundedRect(margin, y - 2, contentWidth, 10, 1, 1, "F");
+
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(67, 56, 202);
+    doc.text("Summary", margin + 3, y + 5);
+    y += 15;
+
+    addWrappedText(dementiaResult.short_summary, 10);
+
+    // ===== DETAILED ANALYSIS =====
+    checkPageBreak(25);
+    doc.setFillColor(237, 233, 254);
+    doc.roundedRect(margin, y - 2, contentWidth, 10, 1, 1, "F");
+
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(67, 56, 202);
+    doc.text("Detailed Analysis", margin + 3, y + 5);
+    y += 15;
+
+    addWrappedText(dementiaResult.diagnosis_reason, 10);
+
+    // ===== PREVENTION & TREATMENT WITH MARKED =====
+    checkPageBreak(25);
+
+    doc.setFillColor(237, 233, 254);
+    doc.roundedRect(margin, y - 2, contentWidth, 10, 1, 1, "F");
+
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(67, 56, 202);
+    doc.text("Prevention & Treatment Recommendations", margin + 3, y + 5);
+    y += 15;
+
+    // Use marked to parse markdown in recommendations
+    marked.setOptions({
+      breaks: true,
+      gfm: true,
+    });
+
+    const recommendationsHtml = marked.parse(
+      dementiaResult.prevention_or_treatment,
+    );
+    const parser = new DOMParser();
+    const htmlDoc = parser.parseFromString(recommendationsHtml, "text/html");
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(30, 41, 59);
+
+    // Process parsed HTML elements
+    htmlDoc.body.childNodes.forEach((node) => {
+      if (node.nodeName === "OL" || node.nodeName === "UL") {
+        // Handle ordered or unordered lists
+        const items = Array.from(node.querySelectorAll("li"));
+
+        items.forEach((li, index) => {
+          checkPageBreak(10);
+
+          if (node.nodeName === "OL") {
+            // Numbered list
+            doc.setFillColor(67, 56, 202);
+            const number = (index + 1).toString();
+
+            doc.circle(margin + 3, y - 1, 2.5, "F");
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "bold");
+            doc.text(number, margin + 3, y + 1, { align: "center" });
+
+            doc.setTextColor(30, 41, 59);
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+          } else {
+            // Bullet list
+            doc.setFillColor(67, 56, 202);
+            doc.circle(margin + 2, y - 1, 1, "F");
+          }
+
+          const text = li.textContent.trim();
+          const wrapped = doc.splitTextToSize(text, contentWidth - 12);
+
+          wrapped.forEach((w) => {
+            checkPageBreak(6);
+            doc.text(w, margin + (node.nodeName === "OL" ? 8 : 6), y);
+            y += 5.5;
+          });
+          y += 2;
+        });
+      } else if (node.nodeName === "P") {
+        // Regular paragraph
+        checkPageBreak(10);
+        const text = node.textContent.trim();
+        if (text) {
+          const wrapped = doc.splitTextToSize(text, contentWidth - 2);
+          wrapped.forEach((w) => {
+            checkPageBreak(6);
+            doc.text(w, margin, y);
+            y += 5.5;
+          });
+          y += 3;
+        }
+      } else if (node.nodeName === "STRONG" || node.nodeName === "B") {
+        // Bold text
+        checkPageBreak(8);
+        doc.setFont("helvetica", "bold");
+        const text = node.textContent.trim();
+        const wrapped = doc.splitTextToSize(text, contentWidth - 2);
+        wrapped.forEach((w) => {
+          checkPageBreak(6);
+          doc.text(w, margin, y);
+          y += 5.5;
+        });
+        doc.setFont("helvetica", "normal");
+        y += 2;
+      } else if (node.nodeName === "#text" && node.textContent.trim()) {
+        // Plain text
+        checkPageBreak(8);
+        const text = node.textContent.trim();
+        const wrapped = doc.splitTextToSize(text, contentWidth - 2);
+        wrapped.forEach((w) => {
+          checkPageBreak(6);
+          doc.text(w, margin, y);
+          y += 5.5;
+        });
+        y += 2;
+      }
+    });
+
+    // ===== ADD FOOTERS =====
+    const pages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
       doc.setPage(i);
-      
-      // Footer separator line
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.5);
-      doc.line(margin, pageHeight - 20, pageWidth - margin, pageHeight - 20);
-      
-      // Footer text
-      doc.setFontSize(8);
-      doc.setTextColor(100, 116, 139);
-      doc.setFont("helvetica", "normal");
-      doc.text(
-        "For medical reference only • Consult a healthcare professional",
-        pageWidth / 2,
-        pageHeight - 12,
-        { align: "center" }
-      );
-      
-      doc.setFont("helvetica", "bold");
-      doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 6, { align: "center" });
+      addFooter();
     }
 
     // ===== SAVE PDF =====
-    const fileName = `Detailed_Dementia_Report_${patientName.replace(/\s+/g, "_")}_${Date.now()}.pdf`;
+    const fileName = `Dementia_Analysis_${patientName.replace(/\s+/g, "_")}_${Date.now()}.pdf`;
     doc.save(fileName);
 
     return { success: true, fileName };
-    
   } catch (error) {
     console.error("PDF Generation Error:", error);
     return { success: false, error: error.message };
   }
 };
-// ========================
-// 3. Professional Dementia PDF (Single Page Optimized)
-// ========================
-export const generateProfessionalDementiaPDF = (dementiaResult, inputData, patientName = "Patient") => {
+export const generateDetailedDementiaPDF = (
+  dementiaResult,
+  patientName = "Patient",
+) => {
   try {
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-      compress: true
-    });
-    
+    const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const leftMargin = 15;
-    const rightMargin = 15;
-    const contentWidth = pageWidth - leftMargin - rightMargin;
-    let y = 20;
+    const margin = 18;
+    const contentWidth = pageWidth - margin * 2;
+    let y = 50;
 
-    // ===== PROFESSIONAL HEADER =====
-    doc.setFillColor(...theme.primary);
-    doc.rect(0, 0, pageWidth, 40, "F");
-    
-    // Logo/Institution Text
-    doc.setTextColor(...theme.white);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("NEUROLOGICAL ASSESSMENT CENTER", leftMargin, 15);
-    
-    // Main Title
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("Dementia Diagnostic Report", pageWidth / 2, 25, { align: "center" });
-    
-    // Subtitle
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text("Confidential Medical Document", pageWidth / 2, 32, { align: "center" });
-    
-    y = 45;
-
-    // ===== PATIENT INFO (Compact Grid) =====
-    doc.setFillColor(...theme.lightGray);
-    doc.rect(leftMargin, y - 5, contentWidth, 30, "F");
-    
-    doc.setTextColor(...theme.primary);
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("PATIENT INFORMATION", leftMargin + 5, y);
-    y += 8;
-    
-    const patientGridData = [
-      ["Patient Name:", patientName || "Not Provided"],
-      ["Date:", new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      })],
-      ["Time:", new Date().toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })],
-      ["Report ID:", `DMR-${Date.now().toString().slice(-8)}`]
-    ];
-    
-    autoTable(doc, {
-      startY: y,
-      head: [],
-      body: patientGridData,
-      theme: "grid",
-      styles: { 
-        fontSize: 9, 
-        cellPadding: 3,
-        overflow: 'linebreak',
-        cellWidth: 'wrap'
-      },
-      columnStyles: { 
-        0: { 
-          fontStyle: "bold", 
-          cellWidth: contentWidth * 0.25,
-          fillColor: theme.lightGray 
-        }, 
-        1: { 
-          cellWidth: contentWidth * 0.25 
-        },
-        2: { 
-          fontStyle: "bold", 
-          cellWidth: contentWidth * 0.25,
-          fillColor: theme.lightGray 
-        },
-        3: { 
-          cellWidth: contentWidth * 0.25 
-        }
-      },
-      margin: { left: leftMargin + 5, right: rightMargin },
-      tableWidth: contentWidth - 10
-    });
-
-    y = doc.lastAutoTable.finalY + 15;
-
-    // ===== CLINICAL DATA (Two-column Grid for Efficiency) =====
-    doc.setTextColor(...theme.primary);
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("CLINICAL PARAMETERS", leftMargin, y);
-    y += 8;
-    
-    const clinicalData = [
-      ["Gender", inputData.Gender || "N/A"],
-      ["Age", `${inputData.Age || "N/A"} years`],
-      ["Education", `${inputData.EDUC || "N/A"} years`],
-      ["MMSE Score", inputData.MMSE || "N/A"],
-      ["CDR", inputData.CDR || "N/A"],
-      ["eTIV", inputData.eTIV ? `${inputData.eTIV} cm³` : "N/A"],
-      ["nWBV", inputData.nWBV ? `${inputData.nWBV}%` : "N/A"],
-      ["ASF", inputData.ASF || "N/A"]
-    ];
-    
-    const clinicalGrid = [];
-    for (let i = 0; i < clinicalData.length; i += 2) {
-      const row = [];
-      row.push(clinicalData[i]);
-      if (i + 1 < clinicalData.length) {
-        row.push(clinicalData[i + 1]);
-      } else {
-        row.push(["", ""]);
+    // Helper to check page break
+    const checkPageBreak = (space = 20) => {
+      if (y + space > pageHeight - 22) {
+        doc.addPage();
+        addFooter();
+        y = margin;
+        return true;
       }
-      clinicalGrid.push(row);
-    }
-    
-    const tableBody = clinicalGrid.map(row => [
-      { content: row[0][0], styles: { fontStyle: 'bold' } },
-      row[0][1],
-      { content: row[1][0], styles: { fontStyle: 'bold' } },
-      row[1][1]
-    ]);
-    
-    autoTable(doc, {
-      startY: y,
-      head: [],
-      body: tableBody,
-      theme: "grid",
-      styles: { 
-        fontSize: 9, 
-        cellPadding: 4,
-        overflow: 'ellipsize',
-        lineWidth: 0.1
-      },
-      columnStyles: {
-        0: { 
-          cellWidth: contentWidth * 0.15,
-          fillColor: theme.lightGray
-        },
-        1: { cellWidth: contentWidth * 0.18 },
-        2: { 
-          cellWidth: contentWidth * 0.15,
-          fillColor: theme.lightGray
-        },
-        3: { cellWidth: contentWidth * 0.18 }
-      },
-      margin: { left: leftMargin, right: rightMargin },
-      tableWidth: contentWidth
+      return false;
+    };
+
+    // Add footer
+    const addFooter = () => {
+      const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+      const totalPages = doc.internal.getNumberOfPages();
+
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(0.5);
+      doc.line(margin, pageHeight - 18, pageWidth - margin, pageHeight - 18);
+
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "italic");
+      doc.text(
+        "For medical reference only • Consult a qualified healthcare professional",
+        pageWidth / 2,
+        pageHeight - 10,
+        { align: "center" },
+      );
+
+      doc.setFont("helvetica", "bold");
+      doc.text(
+        `Page ${currentPage} of ${totalPages}`,
+        pageWidth / 2,
+        pageHeight - 5,
+        { align: "center" },
+      );
+    };
+
+    // Parse markdown table
+    const parseMarkdownTable = (tableHtml) => {
+      const parser = new DOMParser();
+      const tableDoc = parser.parseFromString(tableHtml, "text/html");
+      const table = tableDoc.querySelector("table");
+
+      if (!table) return null;
+
+      const headers = Array.from(table.querySelectorAll("thead th")).map((th) =>
+        th.textContent.trim(),
+      );
+      const rows = Array.from(table.querySelectorAll("tbody tr")).map((tr) =>
+        Array.from(tr.querySelectorAll("td")).map((td) =>
+          td.textContent.trim(),
+        ),
+      );
+
+      return { headers, data: rows };
+    };
+
+    // Draw table
+    const drawTable = (headers, data, width, startX) => {
+      const colWidth = width / headers.length;
+      const rowH = 8;
+      const headerH = 10;
+
+      // Header
+      doc.setFillColor(67, 56, 202);
+      doc.rect(startX, y, width, headerH, "F");
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255);
+
+      headers.forEach((h, i) => {
+        const cellX = startX + i * colWidth;
+        const text = h.length > 15 ? h.substring(0, 13) + "..." : h;
+        doc.text(text, cellX + 2, y + 6.5);
+      });
+      y += headerH;
+
+      // Data rows
+      doc.setTextColor(30, 41, 59);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+
+      data.forEach((row, ri) => {
+        if (ri % 2 === 0) {
+          doc.setFillColor(248, 250, 252);
+        } else {
+          doc.setFillColor(255, 255, 255);
+        }
+        doc.rect(startX, y, width, rowH, "F");
+
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.2);
+
+        row.forEach((cell, ci) => {
+          const cellX = startX + ci * colWidth;
+          doc.rect(cellX, y, colWidth, rowH);
+
+          const cellText = String(cell);
+          const maxWidth = colWidth - 3;
+          const lines = doc.splitTextToSize(cellText, maxWidth);
+          doc.text(lines[0], cellX + 1.5, y + 5.5);
+        });
+
+        y += rowH;
+      });
+
+      return y;
+    };
+
+    // Add wrapped text
+    const addText = (text, fontSize = 10, isBold = false) => {
+      doc.setFontSize(fontSize);
+      doc.setFont("helvetica", isBold ? "bold" : "normal");
+      doc.setTextColor(30, 41, 59);
+
+      const lines = doc.splitTextToSize(text, contentWidth);
+      lines.forEach((line) => {
+        checkPageBreak(6);
+        doc.text(line, margin, y);
+        y += 5.5;
+      });
+    };
+
+    // ===== HEADER =====
+    doc.setFillColor(67, 56, 202);
+    doc.rect(0, 0, pageWidth, 42, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.text("Comprehensive Dementia Assessment", pageWidth / 2, 20, {
+      align: "center",
     });
 
-    y = doc.lastAutoTable.finalY + 15;
-
-    // ===== DIAGNOSIS BADGE =====
-    const hasDementia = dementiaResult.has_dementia || false;
-    const severity = dementiaResult.dementia_severity || "Not Specified";
-    
-    doc.setTextColor(...theme.primary);
     doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("DIAGNOSTIC FINDINGS", leftMargin, y);
-    y += 8;
-    
-    doc.setDrawColor(...(hasDementia ? theme.danger : theme.success));
-    doc.setFillColor(...(hasDementia ? [254, 226, 226] : [220, 252, 231]));
-    doc.setLineWidth(0.5);
-    doc.rect(leftMargin, y, contentWidth, 25, "FD");
-    
-    doc.setTextColor(hasDementia ? theme.danger : theme.success);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text(
-      `● ${hasDementia ? "DEMENTIA DETECTED" : "NO DEMENTIA DETECTED"}`,
-      leftMargin + 5,
-      y + 8
-    );
-    
-    doc.setTextColor(...theme.primary);
-    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(`Severity Level: ${severity}`, leftMargin + 5, y + 16);
-    
-    doc.setFontSize(9);
-    doc.setTextColor(...theme.gray);
-    doc.text(
-      `Confidence: ${dementiaResult.confidence || "High"}`,
-      leftMargin + contentWidth - 60,
-      y + 16
-    );
-    
+    doc.text("Clinical Diagnostic Report", pageWidth / 2, 30, {
+      align: "center",
+    });
+
+    // ===== INFO BOX =====
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(margin, y, contentWidth, 22, 2, 2, "F");
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, y, contentWidth, 22, 2, 2, "S");
+
+    doc.setFontSize(10);
+    doc.setTextColor(51, 65, 85);
+    const col1X = margin + 5;
+    const col2X = margin + contentWidth / 2 + 5;
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Report Date:", col1X, y + 7);
+    doc.setFont("helvetica", "normal");
+    doc.text(new Date().toLocaleDateString(), col1X + 32, y + 7);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Report Time:", col1X, y + 15);
+    doc.setFont("helvetica", "normal");
+    doc.text(new Date().toLocaleTimeString(), col1X + 32, y + 15);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Patient Name:", col2X, y + 7);
+    doc.setFont("helvetica", "normal");
+    doc.text(patientName, col2X + 35, y + 7);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Report ID:", col2X, y + 15);
+    doc.setFont("helvetica", "normal");
+    doc.text(`DEM-${Date.now().toString().slice(-8)}`, col2X + 35, y + 15);
+
     y += 30;
 
-    // ===== KEY SUMMARY =====
-    doc.setTextColor(...theme.primary);
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("KEY SUMMARY", leftMargin, y);
-    y += 8;
-    
-    const maxSummaryLength = 300;
-    const summary = dementiaResult.short_summary || dementiaResult.summary || "";
-    const truncatedSummary = summary.length > maxSummaryLength 
-      ? summary.substring(0, maxSummaryLength) + "..." 
-      : summary;
-    
-    doc.setFontSize(9);
-    doc.setTextColor(...theme.gray);
-    doc.setFont("helvetica", "normal");
-    
-    const summaryResult = addSmartText(
-      doc,
-      truncatedSummary,
-      leftMargin,
-      y,
-      contentWidth,
-      pageHeight - 30,
-      6
-    );
-    
-    y = summaryResult.y + 5;
+    // ===== PARSE MARKDOWN =====
+    const report =
+      dementiaResult.fullReport || dementiaResult.results?.full_markdown_report;
 
-    // ===== RECOMMENDATIONS =====
-    if (dementiaResult.prevention_or_treatment && y < pageHeight - 40) {
-      doc.setTextColor(...theme.primary);
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.text("RECOMMENDATIONS", leftMargin, y);
-      y += 8;
-      
-      const recommendations = (dementiaResult.prevention_or_treatment || "")
-        .split('.')
-        .filter(rec => rec.trim().length > 10)
+    if (report) {
+      // Configure marked for better parsing
+      marked.setOptions({
+        breaks: true,
+        gfm: true,
+      });
+
+      // Parse markdown to HTML
+      const html = marked.parse(report);
+
+      // Parse HTML to extract content
+      const parser = new DOMParser();
+      const htmlDoc = parser.parseFromString(html, "text/html");
+      const body = htmlDoc.body;
+
+      // Storage for sections
+      const sections = [];
+      let currentSection = null;
+
+      // Process all elements
+      body.childNodes.forEach((node) => {
+        if (node.nodeName === "H1") {
+          // Skip H1, we handle it in header
+        } else if (node.nodeName === "H2") {
+          currentSection = {
+            title: node.textContent.trim(),
+            content: [],
+          };
+          sections.push(currentSection);
+        } else if (currentSection) {
+          if (node.nodeName === "TABLE") {
+            const tableData = parseMarkdownTable(node.outerHTML);
+            if (tableData) {
+              currentSection.content.push({ type: "table", data: tableData });
+            }
+          } else if (node.nodeName === "UL") {
+            const items = Array.from(node.querySelectorAll("li")).map((li) =>
+              li.textContent.trim(),
+            );
+            currentSection.content.push({ type: "list", items });
+          } else if (node.nodeName === "P") {
+            const text = node.textContent.trim();
+            if (text) {
+              currentSection.content.push({ type: "paragraph", text });
+            }
+          } else if (node.nodeName === "HR") {
+            currentSection.content.push({ type: "divider" });
+          }
+        }
+      });
+
+      // Find sections with tables for grid layout
+      const tableSections = sections
+        .filter((s) => s.content.some((c) => c.type === "table"))
         .slice(0, 3);
-      
-      doc.setFontSize(9);
-      doc.setTextColor(...theme.gray);
-      
-      recommendations.forEach((rec, index) => {
-        if (y < pageHeight - 30) {
-          doc.setFont("helvetica", "bold");
-          doc.text("•", leftMargin, y);
-          doc.setFont("helvetica", "normal");
-          
-          const lineResult = addSmartText(
-            doc,
-            rec.trim(),
-            leftMargin + 3,
-            y,
-            contentWidth - 3,
-            pageHeight - 30,
-            6
-          );
-          y = lineResult.y + 4;
-        }
-      });
-    }
 
-    // ===== PROFESSIONAL FOOTER =====
-    doc.setDrawColor(...theme.lightGray);
-    doc.setLineWidth(0.5);
-    doc.line(leftMargin, pageHeight - 20, pageWidth - leftMargin, pageHeight - 20);
-    
-    doc.setFontSize(8);
-    doc.setTextColor(...theme.gray);
-    doc.setFont("helvetica", "normal");
-    
-    doc.text(`Generated: ${new Date().toLocaleString()}`, leftMargin, pageHeight - 15);
-    
-    doc.text(
-      "Confidential • For Medical Use Only • Consult Healthcare Professional",
-      pageWidth / 2,
-      pageHeight - 15,
-      { align: "center" }
-    );
-    
-    doc.text(
-      `Page 1 of 1`,
-      pageWidth - leftMargin,
-      pageHeight - 15,
-      { align: "right" }
-    );
+      // ===== RENDER 3-COLUMN GRID =====
+      if (tableSections.length >= 3) {
+        checkPageBreak(60);
 
-    // ===== WATERMARK =====
-    doc.setFontSize(40);
-    doc.setTextColor(240, 240, 240);
-    doc.setFont("helvetica", "bold");
-    doc.setGState(new doc.GState({ opacity: 0.1 }));
-    doc.text(
-      "CONFIDENTIAL",
-      pageWidth / 2,
-      pageHeight / 2,
-      { align: "center", angle: 45 }
-    );
-    doc.setGState(new doc.GState({ opacity: 1 }));
+        const colWidth = (contentWidth - 8) / 3;
 
-    // ===== SAVE PDF =====
-    const fileName = `Dementia_Report_${patientName.replace(/\s+/g, "_")}_${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}.pdf`;
-    doc.save(fileName);
-
-    return { 
-      success: true, 
-      fileName,
-      pageCount: 1,
-      message: "Professional single-page report generated successfully"
-    };
-  } catch (error) {
-    console.error("Professional PDF Generation Error:", error);
-    return { 
-      success: false, 
-      error: error.message,
-      fallback: "Consider using basic PDF generator"
-    };
-  }
-};
-
-// ========================
-// 4. Comprehensive Professional PDF (Multi-page)
-// ========================
-export const generateDetailedProfessionalPDF = (dementiaResult, inputData, patientName = "Patient") => {
-  try {
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-      compress: true
-    });
-
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20;
-    let currentY = margin;
-
-    // ===== COVER PAGE =====
-    doc.setFillColor(...theme.primary);
-    doc.rect(0, 0, pageWidth, pageHeight, "F");
-    
-    doc.setFillColor(...theme.white);
-    doc.rect(margin, 60, pageWidth - (margin * 2), 120, "F");
-    
-    doc.setTextColor(...theme.primary);
-    doc.setFontSize(28);
-    doc.setFont("helvetica", "bold");
-    doc.text(
-      "Comprehensive",
-      pageWidth / 2,
-      90,
-      { align: "center" }
-    );
-    doc.text(
-      "Dementia Analysis",
-      pageWidth / 2,
-      105,
-      { align: "center" }
-    );
-    
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      "Detailed Diagnostic Report",
-      pageWidth / 2,
-      120,
-      { align: "center" }
-    );
-    
-    doc.setFontSize(12);
-    doc.text(`Patient: ${patientName}`, pageWidth / 2, 140, { align: "center" });
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, pageWidth / 2, 150, { align: "center" });
-    
-    doc.setFontSize(10);
-    doc.setTextColor(...theme.danger);
-    doc.setFont("helvetica", "bold");
-    doc.text("CONFIDENTIAL MEDICAL DOCUMENT", pageWidth / 2, 170, { align: "center" });
-    
-    doc.addPage();
-
-    // ===== TABLE OF CONTENTS =====
-    currentY = margin;
-    doc.setTextColor(...theme.primary);
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("Table of Contents", margin, currentY);
-    
-    currentY += 20;
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    
-    const sections = [
-      "1. Executive Summary",
-      "2. Patient Demographics",
-      "3. Clinical Assessment",
-      "4. Diagnostic Findings",
-      "5. Risk Analysis",
-      "6. Treatment Recommendations",
-      "7. Monitoring Plan",
-      "8. Appendices"
-    ];
-    
-    sections.forEach(section => {
-      if (currentY > pageHeight - 30) {
-        doc.addPage();
-        currentY = margin;
-      }
-      
-      const isBold = section.includes("Executive") || section.includes("Appendices");
-      doc.setFont("helvetica", isBold ? "bold" : "normal");
-      doc.setTextColor(isBold ? theme.primary : theme.gray);
-      doc.text(section, margin + 5, currentY);
-      
-      const pageNum = sections.indexOf(section) + 2;
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.1);
-      doc.line(margin + 70, currentY - 2, pageWidth - margin - 20, currentY - 2);
-      
-      doc.setTextColor(theme.gray);
-      doc.text(pageNum.toString(), pageWidth - margin - 5, currentY, { align: "right" });
-      
-      currentY += 8;
-    });
-
-    // ===== EXECUTIVE SUMMARY PAGE =====
-    doc.addPage();
-    currentY = margin;
-    
-    doc.setTextColor(...theme.primary);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("1. Executive Summary", margin, currentY);
-    
-    currentY += 15;
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(60, 60, 60);
-    
-    const fullSummary = dementiaResult.diagnosis_reason || dementiaResult.summary || "";
-    const summaryLines = doc.splitTextToSize(fullSummary, pageWidth - (margin * 2));
-    
-    summaryLines.forEach(line => {
-      if (currentY > pageHeight - 30) {
-        doc.addPage();
-        currentY = margin;
-      }
-      doc.text(line, margin, currentY);
-      currentY += 6;
-    });
-
-    // ===== PATIENT DEMOGRAPHICS PAGE =====
-    doc.addPage();
-    currentY = margin;
-    
-    doc.setTextColor(...theme.primary);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("2. Patient Demographics", margin, currentY);
-    
-    currentY += 15;
-    
-    const demographicData = [
-      ["Category", "Details", "Clinical Notes"],
-      ["Personal Info", `Name: ${patientName}\nGender: ${inputData.Gender}\nAge: ${inputData.Age}`, "Baseline demographics"],
-      ["Education", `${inputData.EDUC} years of formal education`, "Education level impacts cognitive reserve"],
-      ["Assessment Date", new Date().toLocaleDateString(), "Date of evaluation"]
-    ];
-    
-    autoTable(doc, {
-      startY: currentY,
-      head: [demographicData[0]],
-      body: demographicData.slice(1),
-      theme: "grid",
-      styles: { 
-        fontSize: 9, 
-        cellPadding: 4,
-        overflow: 'linebreak'
-      },
-      headStyles: {
-        fillColor: theme.primary,
-        textColor: theme.white,
-        fontSize: 10
-      },
-      alternateRowStyles: {
-        fillColor: theme.lightGray
-      },
-      margin: { left: margin, right: margin }
-    });
-
-    // ===== CLINICAL ASSESSMENT PAGE =====
-    doc.addPage();
-    currentY = margin;
-    
-    doc.setTextColor(...theme.primary);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("3. Clinical Assessment", margin, currentY);
-    
-    currentY += 15;
-    
-    const clinicalAssessmentData = [
-      ["Parameter", "Value", "Normal Range", "Interpretation"],
-      ["MMSE Score", inputData.MMSE || "N/A", "24-30", inputData.MMSE >= 24 ? "Normal" : "Impaired"],
-      ["CDR", inputData.CDR || "N/A", "0", inputData.CDR == 0 ? "No dementia" : "Dementia indicated"],
-      ["nWBV", inputData.nWBV ? `${inputData.nWBV}%` : "N/A", ">75%", inputData.nWBV > 75 ? "Normal" : "Reduced"],
-      ["eTIV", inputData.eTIV ? `${inputData.eTIV} cm³` : "N/A", "Individual", "Reference measurement"],
-      ["ASF", inputData.ASF || "N/A", "~1.0", "Atlas scaling factor"]
-    ];
-    
-    autoTable(doc, {
-      startY: currentY,
-      head: [clinicalAssessmentData[0]],
-      body: clinicalAssessmentData.slice(1),
-      theme: "grid",
-      styles: { 
-        fontSize: 9, 
-        cellPadding: 4,
-        overflow: 'linebreak'
-      },
-      headStyles: {
-        fillColor: theme.secondary,
-        textColor: theme.white,
-        fontSize: 10
-      },
-      alternateRowStyles: {
-        fillColor: theme.lightGray
-      },
-      margin: { left: margin, right: margin }
-    });
-
-    // ===== DIAGNOSTIC FINDINGS PAGE =====
-    doc.addPage();
-    currentY = margin;
-    
-    doc.setTextColor(...theme.primary);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("4. Diagnostic Findings", margin, currentY);
-    
-    currentY += 15;
-    
-    const hasDementia = dementiaResult.has_dementia || false;
-    const severity = dementiaResult.dementia_severity || "Not Specified";
-    
-    // Diagnosis Box
-    doc.setDrawColor(...(hasDementia ? theme.danger : theme.success));
-    doc.setFillColor(...(hasDementia ? [254, 226, 226] : [220, 252, 231]));
-    doc.setLineWidth(1);
-    doc.roundedRect(margin, currentY, pageWidth - (margin * 2), 40, 3, 3, "FD");
-    
-    doc.setTextColor(hasDementia ? theme.danger : theme.success);
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text(
-      hasDementia ? "POSITIVE FOR DEMENTIA" : "NEGATIVE FOR DEMENTIA",
-      pageWidth / 2,
-      currentY + 15,
-      { align: "center" }
-    );
-    
-    doc.setTextColor(...theme.primary);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      `Severity: ${severity}`,
-      pageWidth / 2,
-      currentY + 25,
-      { align: "center" }
-    );
-    
-    currentY += 50;
-    
-    // Detailed Findings
-    if (dementiaResult.diagnosis_reason) {
-      doc.setTextColor(...theme.primary);
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("Detailed Analysis", margin, currentY);
-      
-      currentY += 10;
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(60, 60, 60);
-      
-      const analysisLines = doc.splitTextToSize(dementiaResult.diagnosis_reason, pageWidth - (margin * 2));
-      
-      analysisLines.forEach(line => {
-        if (currentY > pageHeight - 30) {
-          doc.addPage();
-          currentY = margin;
-        }
-        doc.text(line, margin, currentY);
-        currentY += 6;
-      });
-    }
-
-    // ===== RECOMMENDATIONS PAGE =====
-    doc.addPage();
-    currentY = margin;
-    
-    doc.setTextColor(...theme.primary);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("6. Treatment Recommendations", margin, currentY);
-    
-    currentY += 15;
-    
-    if (dementiaResult.prevention_or_treatment) {
-      const recommendations = dementiaResult.prevention_or_treatment
-        .split('.')
-        .filter(rec => rec.trim().length > 10);
-      
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...theme.secondary);
-      
-      recommendations.forEach((rec, index) => {
-        if (currentY > pageHeight - 30) {
-          doc.addPage();
-          currentY = margin;
-        }
-        
-        doc.text(`Recommendation ${index + 1}:`, margin, currentY);
-        currentY += 7;
-        
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(60, 60, 60);
-        
-        const recLines = doc.splitTextToSize(rec.trim(), pageWidth - (margin * 2));
-        recLines.forEach(line => {
-          doc.text(line, margin + 5, currentY);
-          currentY += 6;
-        });
-        
-        currentY += 5;
+        // Section titles
         doc.setFontSize(11);
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(...theme.secondary);
+        doc.setTextColor(67, 56, 202);
+
+        tableSections.forEach((section, idx) => {
+          const x = margin + idx * (colWidth + 4);
+          doc.setFillColor(237, 233, 254);
+          doc.roundedRect(x, y - 2, colWidth, 10, 1, 1, "F");
+          doc.text(section.title, x + colWidth / 2, y + 5, { align: "center" });
+        });
+
+        y += 12;
+
+        // Draw tables side by side
+        const startY = y;
+        let maxHeight = 0;
+
+        tableSections.forEach((section, idx) => {
+          const x = margin + idx * (colWidth + 4);
+          y = startY;
+
+          const tableContent = section.content.find((c) => c.type === "table");
+          if (tableContent) {
+            drawTable(
+              tableContent.data.headers,
+              tableContent.data.data,
+              colWidth,
+              x,
+            );
+            const height = y - startY;
+            maxHeight = Math.max(maxHeight, height);
+          }
+        });
+
+        y = startY + maxHeight + 15;
+
+        // Mark as rendered
+        tableSections.forEach((s) => (s.rendered = true));
+      }
+
+      // ===== RENDER REMAINING SECTIONS =====
+      sections.forEach((section) => {
+        if (section.rendered) return;
+
+        checkPageBreak(15);
+
+        // Section header
+        doc.setFillColor(237, 233, 254);
+        doc.roundedRect(margin, y - 2, contentWidth, 10, 1, 1, "F");
+        doc.setFontSize(13);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(67, 56, 202);
+        doc.text(section.title, margin + 3, y + 5);
+        y += 13;
+        doc.setTextColor(30, 41, 59);
+
+        // Render content
+        section.content.forEach((item) => {
+          if (item.type === "table") {
+            checkPageBreak(30);
+            drawTable(item.data.headers, item.data.data, contentWidth, margin);
+            y += 8;
+          } else if (item.type === "paragraph") {
+            checkPageBreak(10);
+            addText(item.text, 10);
+            y += 3;
+          } else if (item.type === "list") {
+            item.items.forEach((text) => {
+              checkPageBreak(10);
+              doc.setFillColor(67, 56, 202);
+              doc.circle(margin + 2, y - 1, 1, "F");
+
+              doc.setFontSize(10);
+              doc.setFont("helvetica", "normal");
+              doc.setTextColor(30, 41, 59);
+
+              const lines = doc.splitTextToSize(text, contentWidth - 8);
+              lines.forEach((line) => {
+                checkPageBreak(6);
+                doc.text(line, margin + 6, y);
+                y += 5.5;
+              });
+              y += 2;
+            });
+          } else if (item.type === "divider") {
+            checkPageBreak(6);
+            doc.setDrawColor(203, 213, 225);
+            doc.setLineWidth(0.5);
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 6;
+          }
+        });
+
+        y += 5;
       });
     }
 
-    // ===== FINAL PAGE FOOTER FOR ALL PAGES =====
-    const totalPages = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
+    // ===== ADD FOOTERS =====
+    const pages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
       doc.setPage(i);
-      
-      doc.setFontSize(9);
-      doc.setTextColor(...theme.gray);
-      doc.text(
-        `Page ${i} of ${totalPages}`,
-        pageWidth - margin,
-        pageHeight - 10,
-        { align: "right" }
-      );
-      
-      doc.text(
-        "Confidential - Do Not Distribute",
-        margin,
-        pageHeight - 10
-      );
+      addFooter();
     }
 
-    const fileName = `Comprehensive_Dementia_Report_${patientName.replace(/\s+/g, "_")}_${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}.pdf`;
+    // ===== SAVE =====
+    const fileName = `Dementia_Assessment_${patientName.replace(/\s+/g, "_")}_${Date.now()}.pdf`;
     doc.save(fileName);
 
-    return { 
-      success: true, 
-      fileName,
-      pageCount: totalPages,
-      message: "Comprehensive professional report generated"
-    };
+    return { success: true, fileName };
   } catch (error) {
-    console.error("Detailed Professional PDF Error:", error);
+    console.error("PDF Generation Error:", error);
     return { success: false, error: error.message };
   }
 };
-
-// ========================
-// 5. Adaptive PDF Generator
-// ========================
-export const generateAdaptiveDementiaPDF = (dementiaResult, inputData, patientName = "Patient") => {
-  const contentLength = JSON.stringify(dementiaResult).length + JSON.stringify(inputData).length;
-  
-  if (contentLength < 2000) {
-    return generateProfessionalDementiaPDF(dementiaResult, inputData, patientName);
-  } else {
-    return generateDetailedProfessionalPDF(dementiaResult, inputData, patientName);
-  }
-};
-
-// ========================
-// 6. Export All Functions
-// ========================
 export default {
   generateDementiaPDF,
   generateDetailedDementiaPDF,
-  generateProfessionalDementiaPDF,
-  generateDetailedProfessionalPDF,
-  generateAdaptiveDementiaPDF
 };
 
-// ========================
-// How to Use:
-// ========================
-/*
-// Import all functions:
-import { 
-  generateDementiaPDF,
-  generateDetailedDementiaPDF,
-  generateProfessionalDementiaPDF,
-  generateDetailedProfessionalPDF,
-  generateAdaptiveDementiaPDF 
-} from '@/utils/pdfGenerator';
-
-// Or import default:
-import pdfGenerator from '@/utils/pdfGenerator';
-pdfGenerator.generateDementiaPDF(...);
-
-// Example usage:
-const result = await generateDetailedDementiaPDF(
-  dementiaResult, 
-  "John Doe"
-);
-*/

@@ -27,11 +27,9 @@ const ProtectedRoutes = ({ children }) => {
 
 export default function App() {
   // const isLoggedIn = true;
-
   function NotFound() {
     return <h1>❌ Page Not Found</h1>;
   }
-
   function AdminNotFound() {
     return <h1>⚠️ Admin Page Not Found</h1>;
   }

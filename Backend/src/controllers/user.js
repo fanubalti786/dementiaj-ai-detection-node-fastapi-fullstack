@@ -6,7 +6,6 @@ import ApiResponse from "../utils/ApiResponse.js";
 import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/Cloudinary.js";
 import { sendEmail } from "../utils/send.Email.js";
 import crypto from "crypto";
-import axios from "axios";
 
 const registerUser = asyncHandler(async (req, res) => {
   const existedUser = await User.findOne({ email: req.body.email });

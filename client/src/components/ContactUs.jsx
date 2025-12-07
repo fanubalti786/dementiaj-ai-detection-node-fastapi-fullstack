@@ -1,41 +1,68 @@
-import React, { useState } from "react";
-import { Mail, MessageSquare, Send, Phone, MapPin, Brain, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import {
+  Mail,
+  MessageSquare,
+  Send,
+  Phone,
+  MapPin,
+  Brain,
+  ShieldCheck,
+} from "lucide-react";
+import { toast } from "react-toastify";
 
 export default function ContactUs() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    message: ""
+    message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email || !formData.message) {
-      alert("Please fill in all fields");
+      toast.error("Please fill in all fields");
       return;
     }
 
     setIsSubmitting(true);
-    
-    setTimeout(() => {
-      const subject = encodeURIComponent(`Contact - ${formData.name}`);
-      const body = encodeURIComponent(
-        `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
+
+    try {
+      const response = await fetch(
+        "http://localhost:3000/api/v1/contact/sendEmail",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        },
       );
-      
-      window.location.href = `mailto:contact@dementiacare.com?subject=${subject}&body=${body}`;
-      setFormData({ name: "", email: "", message: "" });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Message sent successfully! We'll get back to you soon.");
+        setFormData({ name: "", email: "", message: "" });
+      } else {
+        toast.error(
+          data.message || "Failed to send message. Please try again.",
+        );
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Network error. Please check your connection and try again.");
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -47,7 +74,8 @@ export default function ContactUs() {
             Contact Us
           </h1>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Reach out for questions about dementia screening, technical support, or partnerships.
+            Reach out for questions about dementia screening, technical support,
+            or partnerships.
           </p>
         </div>
 
@@ -56,70 +84,88 @@ export default function ContactUs() {
           <div className="bg-white rounded-2xl p-8 border border-gray-200">
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-2 h-8 bg-primary rounded-full"></div>
-                <h2 className="text-2xl font-bold text-gray-900">Send a Message</h2>
+                <div className="w-2 h-8 bg-blue-600 rounded-full"></div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Send a Message
+                </h2>
               </div>
               <p className="text-gray-500">We'll respond within 24 hours</p>
             </div>
-
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Name
+                </label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="Your name"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="your@email.com"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Message
+                </label>
                 <textarea
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
                   rows="4"
                   placeholder="How can we help you?"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none"
                 ></textarea>
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-primary text-white py-3.5 rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-70"
+                className="w-full bg-blue-600 text-white py-3.5 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-70 flex items-center justify-center gap-2"
               >
-                {isSubmitting ? "Sending..." : "Send Message"}
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Send Message
+                  </>
+                )}
               </button>
             </form>
           </div>
 
           {/* Right: Contact Info */}
           <div className="space-y-6">
-            <div className="bg-gradient-to-br from-primary to-blue-600 rounded-2xl p-8 text-white">
+            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl p-8 text-white">
               <div className="flex items-center gap-3 mb-6">
                 <Brain className="w-8 h-8" />
                 <h3 className="text-2xl font-bold">DementiaCare Support</h3>
               </div>
               <p className="text-white/90 mb-8">
-                Our team specializes in cognitive health technology and is here to assist you.
+                Our team specializes in cognitive health technology and is here
+                to assist you.
               </p>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -127,7 +173,10 @@ export default function ContactUs() {
                   </div>
                   <div>
                     <p className="font-medium">Email</p>
-                    <a href="mailto:contact@dementiacare.com" className="text-white/90 hover:text-white">
+                    <a
+                      href="mailto:contact@dementiacare.com"
+                      className="text-white/90 hover:text-white"
+                    >
                       contact@dementiacare.com
                     </a>
                   </div>
@@ -139,7 +188,10 @@ export default function ContactUs() {
                   </div>
                   <div>
                     <p className="font-medium">Phone</p>
-                    <a href="tel:+15551234567" className="text-white/90 hover:text-white">
+                    <a
+                      href="tel:+15551234567"
+                      className="text-white/90 hover:text-white"
+                    >
                       +1 (555) 123-4567
                     </a>
                   </div>
@@ -157,7 +209,8 @@ export default function ContactUs() {
                   <h4 className="font-bold text-gray-900">Response Time</h4>
                 </div>
                 <p className="text-gray-600 text-sm">
-                  We typically respond to all inquiries within 24 hours during business days.
+                  We typically respond to all inquiries within 24 hours during
+                  business days.
                 </p>
               </div>
 
@@ -169,7 +222,8 @@ export default function ContactUs() {
                   <h4 className="font-bold text-gray-900">Confidential</h4>
                 </div>
                 <p className="text-gray-600 text-sm">
-                  All communications are encrypted and kept strictly confidential.
+                  All communications are encrypted and kept strictly
+                  confidential.
                 </p>
               </div>
             </div>
@@ -183,8 +237,10 @@ export default function ContactUs() {
                 <div>
                   <h4 className="font-bold text-gray-900 mb-2">Location</h4>
                   <p className="text-gray-600 text-sm">
-                    123 Health Innovation Drive<br />
-                    Medical Technology Park<br />
+                    123 Health Innovation Drive
+                    <br />
+                    Medical Technology Park
+                    <br />
                     San Francisco, CA 94107
                   </p>
                 </div>
