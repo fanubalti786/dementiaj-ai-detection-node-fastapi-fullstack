@@ -61,10 +61,10 @@ export default function Login() {
         <div className="flex flex-col">
           <div className="p-4 pt-8 text-center">
             <h1 className="text-3xl font-bold">
-              <span className="text-primary">Admin </span>Login
+              <span className="text-primary">Login </span>
             </h1>
             <p className="font-light">
-              Enter your credentials to access the admin panel
+              Enter your credentials to access the admin/user panel
             </p>
           </div>
 
