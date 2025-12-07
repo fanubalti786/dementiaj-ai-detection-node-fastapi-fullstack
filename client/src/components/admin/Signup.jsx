@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
+import * as Yup from "yup";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -10,6 +11,23 @@ export default function Signup() {
   const [avatarPreview, setAvatarPreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [avatarError, setAvatarError] = useState(""); // Error state for avatar
+
+  // Yup Schema
+  const schema = Yup.object().shape({
+    fullName: Yup.string()
+      .required("Full Name is required")
+      .min(3, "Full Name must be at least 3 characters"),
+    email: Yup.string().required("Email is required").email("Invalid email"),
+    password: Yup.string()
+      .required("Password is required")
+      .min(8, "Password must be at least 8 characters")
+      .matches(
+        /^(?=.*[A-Z])(?=.*\d).+$/,
+        "Password must contain at least one capital letter and one number"
+      ),
+    avatar: Yup.mixed().required("Avatar is required"),
+  });
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
@@ -17,29 +35,29 @@ export default function Signup() {
       setAvatar(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setAvatarPreview(reader?.result);
+        setAvatarPreview(reader.result);
       };
       reader.readAsDataURL(file);
+      setAvatarError(""); // Clear avatar error when a file is selected
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-
-    if (!fullName || !email || !password || !avatar) {
-      setError("All fields including avatar are required");
-      return;
-    }
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long");
-      return;
-    }
-
-    setLoading(true);
+    setError("");  // Clear previous error
+    setAvatarError(""); // Clear avatar error
 
     try {
+      // Validate form using Yup
+      await schema.validate({ fullName, email, password, avatar });
+
+      if (!avatar) {
+        setAvatarError("Avatar is required"); // Manually set avatar error if not selected
+        return;
+      }
+
+      setLoading(true);
+
       const formData = new FormData();
       formData.append("fullName", fullName);
       formData.append("email", email);
@@ -52,7 +70,7 @@ export default function Signup() {
         {
           method: "POST",
           body: formData,
-        },
+        }
       );
 
       const data = await response.json();
@@ -64,8 +82,12 @@ export default function Signup() {
         setError(data.message || "Signup failed");
       }
     } catch (err) {
-      setError("An error occurred. Please try again.");
-      console.error(err);
+      if (err.name === "ValidationError") {
+        setError(err.message);
+      } else {
+        setError("An error occurred. Please try again.");
+        console.error(err);
+      }
     } finally {
       setLoading(false);
     }
@@ -73,10 +95,7 @@ export default function Signup() {
 
   return (
     <div className="flex justify-center items-center min-h-screen py-8">
-      <div
-        className="w-full max-w-sm p-4 border rounded-lg border-primary/30 
-      shadow-xl shadow-primary/15"
-      >
+      <div className="w-full max-w-sm p-4 border rounded-lg border-primary/30 shadow-xl shadow-primary/15">
         <div className="flex flex-col">
           <div className="p-4 pt-8 text-center">
             <h1 className="text-3xl font-bold">
@@ -92,6 +111,7 @@ export default function Signup() {
               </div>
             )}
 
+            {/* Avatar */}
             <div className="flex flex-col items-center mb-6">
               <div className="w-24 h-24 rounded-full border-2 border-gray-300 overflow-hidden mb-3 bg-gray-100">
                 {avatarPreview ? (
@@ -123,11 +143,14 @@ export default function Signup() {
                   accept="image/*"
                   onChange={handleAvatarChange}
                   className="hidden"
-                  required
                 />
               </label>
+              {avatarError && (
+                <div className="text-red-500 mt-2 text-sm">{avatarError}</div>
+              )}
             </div>
 
+            {/* Full Name */}
             <div className="flex flex-col mb-6">
               <label>Full Name</label>
               <input
@@ -140,6 +163,7 @@ export default function Signup() {
               />
             </div>
 
+            {/* Email */}
             <div className="flex flex-col mb-6">
               <label>Email</label>
               <input
@@ -152,16 +176,16 @@ export default function Signup() {
               />
             </div>
 
+            {/* Password */}
             <div className="flex flex-col mb-6">
               <label>Password</label>
               <input
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}
                 type="password"
-                placeholder="your password (min 8 characters)"
+                placeholder="your password (min 8 chars, 1 capital, 1 number)"
                 className="border-b-2 border-gray-300 p-2 outline-none"
                 required
-                minLength={8}
               />
             </div>
 
