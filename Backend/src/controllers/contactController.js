@@ -14,8 +14,8 @@ const sendContactEmail = asyncHandler(async (req, res) => {
   try {
     const transporter = createTransporter();
     const mailOptions = {
-      from: `"${name}" <user@gmail.com>`, // Replace with your actual Gmail account
-      to: "user@gmail.com", // Replace with your  email address
+      from: `"${name}" <numl-s22-42445@numls.edu.pk>`, // Replace with your actual Gmail account
+      to: "numl-s22-42445@numls.edu.pk", // Replace with your  email address
       replyTo: email, // user's email for easy reply
       subject: `Contact Form - Message from ${name}`,
       html: `
